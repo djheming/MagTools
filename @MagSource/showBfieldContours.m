@@ -79,7 +79,7 @@ if sum(survey.nonsingdims) > 1
         axis(ah,'equal'); % Since all dimensions of this plot are spatial.
 
         % Pull out the appropriate B component and draw contours.
-        Bcomp = get_Bcomp( B, component(k), thisSource.Bref );
+        Bcomp = thisSource.getBcomponent( B, component(k) );
         MagSource.drawFieldContours( ah, survey, Bcomp*1e9, 'cbar_label', [ 'B_{' component(k) '} (nT)' ], 'view', args.view, optargs{:}, 'Vmax', args.Vmax );
 
         % Show the source body or bodies as well.
@@ -196,24 +196,3 @@ switch txt
         i = 0;
 end
 
-
-
-function Bcomp = get_Bcomp( B, comp, Bref )
-
-switch comp
-    case 'x'
-        Bcomp = B(1,:);
-    case 'y'
-        Bcomp = B(2,:);
-    case 'z'
-        Bcomp = B(3,:);
-    case 't'
-        Bcomp = sqrt( sum( B.^2, 1 ) );
-    case 'a'
-        if isempty( Bref )
-            error( 'Bref must be defined before we can compute the anomaly with respect to Bref.' );
-        end
-        Bcomp = sqrt(sum((B+Bref).^2,1)) - sqrt(sum(Bref.^2,1));
-    otherwise
-        error( 'Unrecognized component type (%s)', comp );
-end
