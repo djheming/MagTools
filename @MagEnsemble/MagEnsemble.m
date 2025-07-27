@@ -151,6 +151,21 @@ classdef MagEnsemble < MagSource
                     myEnsemble.showBfieldContours( 'z', survey_volume );
                     BaseTools.tile_figures( myEnsemble.showQfieldContours( 'all', survey_volume, 'view', [ 25 15 ] ) );
 
+                case 'mixed_orientation'
+
+                    % Create source array.
+                    myEnsemble = MagEnsemble( [ ...
+                        MagBox( [ -4 0 ], [ -1 3 ], [ -1 1 ], [ 1 0 0 ]' ); ...
+                        MagBox( [ 0 5 ], [ 0 2 ], [ 0 1 ], [ 2 0 0 ]', [ 4 0 -2 ]', BaseTools.rpy2rot( 17, -28, 39 ), 'S' ); ...
+                        ] );
+
+                    % Show field structure around this prism.
+                    survey_plane = SurveyField( linspace(-8,8), linspace(-8,8), 0 );
+                    fh = myEnsemble.showBfieldContours( 'x', survey_plane, 'view', [ 20 40 ] );
+                    fh.CurrentAxes.ZLim = [ -2 2 ];
+                    fh.Position(4) = 400;
+                    varargout{1} = fh;
+                                        
                 case 'Bongiolo4'
 
                     % Need to translate from Bongiolo's Table 1 into my
@@ -159,7 +174,7 @@ classdef MagEnsemble < MagSource
                     dec = 10; % degrees
                     Bint = 439.82e-9; % Teslas
                     B_ambient = MagSource.B_inc_dec_to_enr( Bint, inc, dec );
-                    X = 1;
+                    chi = 1;
                     Mr = 0;
                     wx = 20;
                     wy = 20;
@@ -168,11 +183,10 @@ classdef MagEnsemble < MagSource
                     y0 = 30;
                     topdepth = 1;
                     yinc = 0;
-                    myBox = BongioloMagBox( B_ambient, X, Mr, wx, wy, wz, x0, y0, topdepth, yinc );
-                    myBox.Bref = B_ambient;
+                    myBox = BongioloMagBox( chi, Mr, wx, wy, wz, x0, y0, topdepth, yinc );
+                    myBox.Ba = B_ambient;
                     survey_plane = SurveyField( linspace(0,64), linspace(0,64), 0 );
                     myBox.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
-                    clim( [ -44 39 ] ); colormap(jet);
                     BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
                     survey_volume = SurveyField( linspace(0,64), linspace(0,64), linspace(-20,20) );
                     BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ 0 90 ] ) );
@@ -186,18 +200,20 @@ classdef MagEnsemble < MagSource
                     Bint = 27865e-9; % Teslas
                     B_ambient = MagSource.B_inc_dec_to_enr( Bint, inc, dec );
                     myEnsemble = MagEnsemble( [ ...
-                        BongioloMagBox( B_ambient, 0.027, 0, 2000, 200, 500, 3500, 3500, 80, 25 ) ...
-                        BongioloMagBox( B_ambient, 0.027, 0, 2000, 200, 500, 1500, 1500, 50, -25 ) ...
-                        BongioloMagBox( B_ambient, 0.027, 0, 500, 500, 500, 4500, 4500, 200, 0 ) ...
-                        BongioloMagBox( B_ambient, 0.027, 0, 1000, 500, 500, 1500, 4500, 100, 45 ) ...
-                        BongioloMagBox( B_ambient, 0.027, 0, 1500, 100, 250, 4500, 1000, 50, -215 ) ...
-                        BongioloMagBox( B_ambient, 0.027, 0, 1000, 200, 500, 4500, 1000, 150, 75 ) ...
+                        BongioloMagBox( 0.027, 0, 2000, 200, 500, 3500, 3500, 80, 25 ) ...
+                        BongioloMagBox( 0.027, 0, 2000, 200, 500, 1500, 1500, 50, -25 ) ...
+                        BongioloMagBox( 0.027, 0, 500, 500, 500, 4500, 4500, 200, 0 ) ...
+                        BongioloMagBox( 0.027, 0, 1000, 500, 500, 1500, 4500, 100, 45 ) ...
+                        BongioloMagBox( 0.027, 0, 1500, 100, 250, 4500, 1000, 50, -215 ) ...
+                        BongioloMagBox( 0.027, 0, 1000, 200, 500, 4500, 1000, 150, 75 ) ...
                         ] );
-                    myEnsemble.Bref = B_ambient;
+                    myEnsemble.Ba = B_ambient;
                     survey_plane = SurveyField( linspace(0,6000), linspace(0,6000), 0 );
-                    myEnsemble.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
-                    clim( [ -275 95 ] ); colormap(jet);
-                    BaseTools.tile_figures( myEnsemble.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
+                    fh_total_anom = myEnsemble.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
+                    fh_B_components = BaseTools.tile_figures( myEnsemble.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
+
+                    % Set output arguments.
+                    varargout{1} = { fh_total_anom, fh_B_components };
 
             end
 
@@ -210,21 +226,14 @@ end
 
 
 
-function thisBox = BongioloMagBox( B_ambient, X, Mr, wx, wy, wz, x0, y0, topdepth, yinc )
+function thisBox = BongioloMagBox( chi, Mr, wx, wy, wz, x0, y0, topdepth, yinc )
 
 % Translate from Bongiolo+ terminology to mine.
 
 % Note: Bongiolo+ seems to be using a left-handed coordinate system with +y
 % aligned with geographic north, +x aligned with geographic east, and +z
-% pointing downward. I always use a right-handed system, so I will adopt 
-% +x (east), +y (north), +z (upward).
-
-% Compute induced rock magnetization given the specified magnetic
-% susceptibility and the ambient B-field.
-M_ind = B_ambient * X/MagSource.mu_naught;
-
-% If a remanent magnetization has also been specified, add that here too.
-M = M_ind + Mr;
+% pointing downward. 
+% I will use a right-handed system with +x (east), +y (north), +z (upward). 
 
 % Bongiolo+ allow for a prism to be centered away from the origin, and
 % rotated in the xy plane (rotation about the z-axis). We have to be
@@ -233,11 +242,10 @@ v_AS = [ x0 y0 -(topdepth+wz/2) ]';
 R_AS = BaseTools.rpy2rot( 0, 0, yinc )';
 
 % Finally, we have the necessary information to specify the prism
-% dimensions and effective magnetization. The last argument tells MagBox
-% that the magnetization direction is specified in the analysis ('A')
-% coordinate system and not a coordinate system that is rotated with the
-% prism.
-thisBox = MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], M, v_AS, R_AS, 'A' );
+% dimensions, remanent magnetization, and susceptibility. The total
+% magnetization (remanent plus induced) will be calculated later when the B
+% field is requested.
+thisBox = MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], Mr, v_AS, R_AS, 'A', 'chi', chi );
 
 end
 
