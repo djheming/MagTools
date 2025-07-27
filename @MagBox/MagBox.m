@@ -10,7 +10,15 @@ classdef MagBox < MagSource
     %       vz (1x2 array): range of z positions spanned by the box.
     %
     %   The box is assumed to have uniform magnetization:
-    %       M (3x1 vector): magnetization (A/m)
+    %       M (3x1 vector): remanent magnetization (A/m)
+    %
+    %   Optional additional properties:
+    %       chi (scalar): magnetic susceptibility (n/d); if included, the
+    %       total magnetization is computed internally as M = Mr + Mi where
+    %       Mr is the remanent magnetization specified above and Mi = Ba *
+    %       chi/mu0 is the induced magnetization (additionally requires an
+    %       ambient field, Ba, to be specified)
+    %       Ba (3x1 vector): ambient magnetic field (Teslas)
     %
     %   Derived properties include:
     %       V (scalar): box volume (m^3)
@@ -38,8 +46,9 @@ classdef MagBox < MagSource
 
     properties (Access=public)
         
-        M % (3x1 vector) magnetization (A/m), assumed uniform throughout the box.
-        Mframe = 'S' % coordinate frame in which M is expressed.
+        Mframe = 'A' % coordinate frame in which M is expressed (analysis coordinate system by default).
+        Mr % (3x1 vector) remanent magnetization (A/m), assumed uniform throughout the box.
+        chi % (n/d scalar) magnetic susceptibility for induced magnetization.
 
         % The vx, vy, vz ranges are specified in a coordinate system
         % that may or may not be unique to this source body. If the source
@@ -62,6 +71,7 @@ classdef MagBox < MagSource
     
     properties (Dependent)
 
+        M % (3x1 vector) magnetization (A/m), assumed uniform throughout the box.
         vx % (1x2 array) range of x positions spanned by the box in its own frame.
         vy % (1x2 array) range of y positions spanned by the box in its own frame.
         vz % (1x2 array) range of z positions spanned by the box in its own frame.
@@ -96,12 +106,18 @@ classdef MagBox < MagSource
                 newMagBox.int_vx = sort(varargin{1});
                 newMagBox.int_vy = sort(varargin{2});
                 newMagBox.int_vz = sort(varargin{3});
-                newMagBox.M = varargin{4};
+                newMagBox.Mr = varargin{4};
                 if nargin >= 6
                     newMagBox.v_AS = varargin{5};
                     newMagBox.R_AS = varargin{6};
-                    if nargin == 7
+                    if nargin >= 7
                         newMagBox.Mframe = varargin{7};
+                        if nargin >= 8
+                            args = BaseTools.argarray2struct( varargin(8:end) );
+                            if isfield(args,'chi')
+                                newMagBox.chi = args.chi;
+                            end
+                        end
                     end
                 end
             end
@@ -119,6 +135,17 @@ classdef MagBox < MagSource
         end
 
         % Simple getter methods.
+        function M = get.M( thisMagBox )
+            if isempty( thisMagBox.Mr )
+                thisMagBox.Mr = zeros(3,1);
+            end
+            if ~isempty( thisMagBox.chi ) && ~isempty( thisMagBox.Ba )
+                Mi = thisMagBox.Ba * thisMagBox.chi / MagSource.mu_naught;
+            else
+                Mi = 0;
+            end
+            M = thisMagBox.Mr + Mi;
+        end
         function vx = get.vx( thisMagBox )
             vx = thisMagBox.int_vx;
         end
@@ -499,7 +526,7 @@ classdef MagBox < MagSource
                     R_AS = BaseTools.rpy2rot( roll, pitch, yaw );
                     v_AS = [ 2 -.5 0 ]';
                     M = [ 0 1 0 ]'; % This is in the source coordinate frame.
-                    myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS );
+                    myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS, 'S' );
                     myBox.drawBox( 'axes', true );
 
                     % Show field structure around this prism.
