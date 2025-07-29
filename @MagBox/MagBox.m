@@ -72,6 +72,7 @@ classdef MagBox < MagSource
     properties (Dependent)
 
         M % (3x1 vector) magnetization (A/m), assumed uniform throughout the box.
+        Mi % (3x1 vector) induced magnetization (A/m), assumed uniform throughout the box.
         vx % (1x2 array) range of x positions spanned by the box in its own frame.
         vy % (1x2 array) range of y positions spanned by the box in its own frame.
         vz % (1x2 array) range of z positions spanned by the box in its own frame.
@@ -135,16 +136,22 @@ classdef MagBox < MagSource
         end
 
         % Simple getter methods.
-        function M = get.M( thisMagBox )
+        function Mr = get.Mr( thisMagBox )
             if isempty( thisMagBox.Mr )
-                thisMagBox.Mr = zeros(3,1);
+                Mr = zeros(3,1);
+            else
+                Mr = thisMagBox.Mr;
             end
+        end
+        function Mi = get.Mi( thisMagBox )
             if ~isempty( thisMagBox.chi ) && ~isempty( thisMagBox.Ba )
                 Mi = thisMagBox.Ba * thisMagBox.chi / MagSource.mu_naught;
             else
-                Mi = 0;
+                Mi = zeros(3,1);
             end
-            M = thisMagBox.Mr + Mi;
+        end
+        function M = get.M( thisMagBox )
+            M = thisMagBox.Mr + thisMagBox.Mi;
         end
         function vx = get.vx( thisMagBox )
             vx = thisMagBox.int_vx;
