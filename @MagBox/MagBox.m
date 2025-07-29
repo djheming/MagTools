@@ -363,7 +363,7 @@ classdef MagBox < MagSource
             movietimer = tic;
             for t = 1 : num_frames
                 myBox = boxList(t);
-                comp_fig = BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_volume, 'Q', Q, 'view', [ 25 15 ], 'title', true ), 1, 3 );
+                comp_fig = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'Q', Q, 'view', [ 25 15 ], 'title', true ), 1, 3 );
                 writeVideo( writerObj, getframe(comp_fig) );
                 close(comp_fig);
                 BaseTools.progress_report(movietimer,t,num_frames);
@@ -477,14 +477,14 @@ classdef MagBox < MagSource
                     fc = vertBox.showBfieldContours( 'x', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(c)' );
                     fb = horizBox.showBfieldContours( 'x', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(b)' );
                     fd = horizBox.showBfieldContours( 'z', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(d)' );
-                    fh49 = BaseTools.tile_figures( { fa fb fc fd }, 2, 2 );
+                    fh49 = BaseTools.tileFigures( { fa fb fc fd }, 2, 2 );
                     
                     % Define a 1D transect and show B field along it.
                     % This corresponds to Blakely Figure 4.10.
                     survey_transect = SurveyField( linspace(-2,2), 0, -1 );
                     f_ca = vertBox.showBfieldContours( 'xz', survey_transect, 'ref_src', vertDipole, 'transect_labels', { '(c)' '(a)' } );
                     f_bd = horizBox.showBfieldContours( 'xz', survey_transect, 'ref_src', horizDipole, 'transect_labels', { '(b)' '(d)' } );
-                    fh410 = BaseTools.tile_figures( { f_ca f_bd }, 1, 2 );
+                    fh410 = BaseTools.tileFigures( { f_ca f_bd }, 1, 2 );
                     fh410.Position(3:4) = [ 1100 480 ];
                     
                     % Define a 3D region and show B field in that region.
@@ -500,8 +500,8 @@ classdef MagBox < MagSource
                     survey_transect.overlaySurvey( hfh, 'clr', [ .9 0 .9 ] );
 
                     % Assemble separate panels into a single figure.
-                    fh3Dv = BaseTools.tile_figures( vfh, 1, 3 );
-                    fh3Dh = BaseTools.tile_figures( hfh, 1, 3 );
+                    fh3Dv = BaseTools.tileFigures( vfh, 1, 3 );
+                    fh3Dh = BaseTools.tileFigures( hfh, 1, 3 );
 
                     % Set output arguments.
                     varargout{1} = { fh49, fh410, fh3Dv, fh3Dh };
@@ -522,7 +522,7 @@ classdef MagBox < MagSource
                     survey_plane = SurveyField( linspace(-3,3), 0, linspace(-3,1) );
                     vfh = vertBox.showBfieldContours( 'xz', survey_plane );
                     hfh = horizBox.showBfieldContours( 'xz', survey_plane );
-                    BaseTools.tile_figures( [ hfh' vfh' ] );
+                    BaseTools.tileFigures( [ hfh' vfh' ] );
 
                 case 'askew_prism'
 
@@ -538,8 +538,8 @@ classdef MagBox < MagSource
 
                     % Show field structure around this prism.
                     survey_plane = SurveyField( linspace(-8,8), linspace(-8,8), 0.5 );
-                    BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_plane ) );
-                    BaseTools.tile_figures( myBox.showBfieldContours( 'xyz' ) );
+                    BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_plane ) );
+                    BaseTools.tileFigures( myBox.showBfieldContours( 'xyz' ) );
                     
                 case 'staticQ'
 

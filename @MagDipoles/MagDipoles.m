@@ -195,14 +195,14 @@ classdef MagDipoles < MagSource
                     fc = vertDipole.showBfieldContours( 'x', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(c)' );
                     fb = horizDipole.showBfieldContours( 'x', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(b)' );
                     fd = horizDipole.showBfieldContours( 'z', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(d)' );
-                    fh49 = BaseTools.tile_figures( { fa fb fc fd }, 2, 2 );
+                    fh49 = BaseTools.tileFigures( { fa fb fc fd }, 2, 2 );
                     
                     % Define a 1D transect and show B field along it.
                     % This corresponds to Blakely Figure 4.10.
                     survey_transect = SurveyField( linspace(-2,2), 0, -1 );
                     f_ca = vertDipole.showBfieldContours( 'xz', survey_transect, 'transect_labels', { '(c)' '(a)' } );
                     f_bd = horizDipole.showBfieldContours( 'xz', survey_transect, 'transect_labels', { '(b)' '(d)' } );
-                    fh410 = BaseTools.tile_figures( { f_ca f_bd }, 1, 2 );
+                    fh410 = BaseTools.tileFigures( { f_ca f_bd }, 1, 2 );
                     fh410.Position(3:4) = [ 1100 480 ];
                     
                     % Define a 3D region and show B field in that region.
@@ -218,8 +218,8 @@ classdef MagDipoles < MagSource
                     survey_transect.overlaySurvey( hfh, 'clr', [ .9 0 .9 ] );
 
                     % Assemble separate panels into a single figure.
-                    fh3Dv = BaseTools.tile_figures( vfh, 1, 3 );
-                    fh3Dh = BaseTools.tile_figures( hfh, 1, 3 );
+                    fh3Dv = BaseTools.tileFigures( vfh, 1, 3 );
+                    fh3Dh = BaseTools.tileFigures( hfh, 1, 3 );
 
                     % Set output arguments.
                     varargout{1} = { fh49, fh410, fh3Dv, fh3Dh };
@@ -230,8 +230,8 @@ classdef MagDipoles < MagSource
                     % assumed here. By default, the assumption is that each
                     % dipole corresponds to a volume of 1x1x1 length units.
                     vertDipole.showQfieldContours( 'all', survey_transect );
-                    BaseTools.tile_figures( vertDipole.showQfieldContours( 'all', survey_plane ), 3, 3 );
-                    BaseTools.tile_figures( vertDipole.showQfieldContours( 'all', survey_volume, 'z_down', true, 'view', [ -130 -20 ] ), 3, 3 );
+                    BaseTools.tileFigures( vertDipole.showQfieldContours( 'all', survey_plane ), 3, 3 );
+                    BaseTools.tileFigures( vertDipole.showQfieldContours( 'all', survey_volume, 'z_down', true, 'view', [ -130 -20 ] ), 3, 3 );
                     
                 case 'multiple_dipoles'
 
@@ -247,13 +247,13 @@ classdef MagDipoles < MagSource
                                         
                     % Define a plane for evaluation and show Q field on that plane.
                     survey_plane = SurveyField( linspace(-b,b), linspace(-b,b), -0.1 );
-                    BaseTools.tile_figures( myDipoles.showQfieldContours( 'all', survey_plane ), 3, 3 );
-                    BaseTools.tile_figures( myDipoles.showBfieldContours( 'xyz', survey_plane ), 1, 3 );
+                    BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', survey_plane ), 3, 3 );
+                    BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', survey_plane ), 1, 3 );
 
                     % Define a survey volume and show field contours.
                     survey_volume = SurveyField( linspace(-b,b), linspace(-b,b), linspace(-b,b) );
-                    BaseTools.tile_figures( myDipoles.showQfieldContours( 'all', survey_volume ), 3, 3 );
-                    BaseTools.tile_figures( myDipoles.showBfieldContours( 'xyz', survey_volume ), 1, 3 );
+                    BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', survey_volume ), 3, 3 );
+                    BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', survey_volume ), 1, 3 );
 
                 case 'dipole_grid'
 
@@ -267,18 +267,18 @@ classdef MagDipoles < MagSource
 
                     % Define a plane for evaluation and show Q field on that plane.
                     survey_plane = SurveyField( linspace(-b,b), linspace(-b,b), -1 );
-                    BaseTools.tile_figures( myDipoles.showQfieldContours( 'all', survey_plane ), 3, 3 );
-                    BaseTools.tile_figures( myDipoles.showBfieldContours( 'xyz', survey_plane ), 1, 3 );
+                    BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', survey_plane ), 3, 3 );
+                    BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', survey_plane ), 1, 3 );
                     
                     % Define a survey volume and show field contours.
                     n = 50; % For 3D volumes, it may be useful to limit resolution.
                     survey_volume = SurveyField( linspace(-b,b,n), linspace(-b,b,n), linspace(-b,b,n) );
-                    BaseTools.tile_figures( myDipoles.showQfieldContours( 'all', survey_volume ), 3, 3 );
-                    BaseTools.tile_figures( myDipoles.showBfieldContours( 'xyz', survey_volume ), 1, 3 );
+                    BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', survey_volume ), 3, 3 );
+                    BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', survey_volume ), 1, 3 );
                     
                     % % Show field contours.
-                    % BaseTools.tile_figures( myDipoles.showQfieldContours( 'all', [] ), 3, 3 );
-                    % BaseTools.tile_figures( myDipoles.showBfieldContours( 'xyz', [] ), 1, 3 );
+                    % BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', [] ), 3, 3 );
+                    % BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', [] ), 1, 3 );
 
                 case 'timing'
 

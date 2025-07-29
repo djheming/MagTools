@@ -143,13 +143,13 @@ classdef MagEnsemble < MagSource
                         SurveyField( linspace(-5,5), linspace(-5,5), 1 )
                         SurveyField( linspace(-5,5), 1, linspace(-6,1) )
                         ];                    
-                    BaseTools.tile_figures( myEnsemble.showBfieldContours( 'xyz', survey_planes, 'view', [ 25 15 ] ) );
-                    BaseTools.tile_figures( myEnsemble.showQfieldContours( { 'xx' 'xy' }, survey_planes, 'view', [ 25 15 ] ) );
+                    BaseTools.tileFigures( myEnsemble.showBfieldContours( 'xyz', survey_planes, 'view', [ 25 15 ] ) );
+                    BaseTools.tileFigures( myEnsemble.showQfieldContours( { 'xx' 'xy' }, survey_planes, 'view', [ 25 15 ] ) );
 
                     % Show field over 3D volume.
                     survey_volume = SurveyField( linspace(-10,10), linspace(-10,10), linspace(0,10) );
                     myEnsemble.showBfieldContours( 'z', survey_volume );
-                    BaseTools.tile_figures( myEnsemble.showQfieldContours( 'all', survey_volume, 'view', [ 25 15 ] ) );
+                    BaseTools.tileFigures( myEnsemble.showQfieldContours( 'all', survey_volume, 'view', [ 25 15 ] ) );
 
                 case 'mixed_orientation'
 
@@ -187,9 +187,9 @@ classdef MagEnsemble < MagSource
                     myBox.Ba = B_ambient;
                     survey_plane = SurveyField( linspace(0,64), linspace(0,64), 0 );
                     myBox.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
-                    BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
+                    BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
                     survey_volume = SurveyField( linspace(0,64), linspace(0,64), linspace(-20,20) );
-                    BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ 0 90 ] ) );
+                    BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ 0 90 ] ) );
 
                 case 'Bongiolo7'
 
@@ -210,7 +210,7 @@ classdef MagEnsemble < MagSource
                     myEnsemble.Ba = B_ambient;
                     survey_plane = SurveyField( linspace(0,6000), linspace(0,6000), 0 );
                     fh_total_anom = myEnsemble.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
-                    fh_B_components = BaseTools.tile_figures( myEnsemble.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
+                    fh_B_components = BaseTools.tileFigures( myEnsemble.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
 
                     % Set output arguments.
                     varargout{1} = { fh_total_anom, fh_B_components };
