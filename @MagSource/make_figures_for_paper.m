@@ -23,10 +23,10 @@ if ~exist( figs_folder, 'dir' )
 end
 
 % Select which plots to generate by setting the appropriate variables to true.
-show_2D_box_geometry = false;
+show_2D_box_geometry = true;
 show_3D_box_geometry = false;
 show_3D_coordinate_change = false;
-show_2D_Q_and_B = true;
+show_2D_Q_and_B = false;
 show_3D_Q_and_B = false;
 show_Blakely = false;
 show_Bongiolo = false;
@@ -54,7 +54,7 @@ if show_2D_box_geometry
 
     % Show the box in 2D, illustrating the evaluation point.
     for k = 1 : N
-        ah = myBox.drawBox( 'p', p(:,k), 'label_p', true, 'vertices', true, 'alphas_and_fs', true, 'zerocrossings', true, 'view', [ 0 90 ] );
+        ah = myBox.drawBox( 'p', p(:,k), 'axislabels', 'ijk', 'label_p', true, 'vertices', true, 'alphas_and_fs', true, 'zerocrossings', true, 'view', [ 0 90 ] );
         exportgraphics( ancestor(ah,'figure'), sprintf('../Figures/2D_box_geometry_p(%s,%s).png', num2str(p(1,k)), num2str(p(2,k)) ) );
     end
 
@@ -70,7 +70,7 @@ if show_3D_box_geometry
     p = [ 2.45 -1 0.9 ]';
 
     % Show the box in 3D, illustrating the evaluation point.
-    ah = myBox.drawBox( 'p', p, 'axes', true, 'vertices', true, 'show_p_vector', true, 'verts_from_origin', { '122', '211' }, 'view', [ 39 47 ] );
+    ah = myBox.drawBox( 'p', p, 'axes', true, 'vertices', true, 'show_p_vector', true, 'label_p', true, 'verts_from_origin', { '122', '211' }, 'view', [ 39 47 ] );
 
     % Save orthographic and oblique views.
     view( ah, [ 0 90 ] ); % xy
@@ -99,7 +99,7 @@ if show_3D_box_geometry
     % For each evaluation point, show the box with shaded solid angles on
     % the +i and -i faces.
     for k = 1 : num_points
-        myBox.drawBox( 'p', p(:,k), 'vertices', true, 'show_p_vector', true, 'shading', true, 'axes', true, 'axislabels', 'ijk', 'rlabels', false, 'alphas_and_fs', true, 'view', [ 20 60 ] );
+        myBox.drawBox( 'p', p(:,k), 'vertices', true, 'show_p_vector', true, 'label_p', true, 'shading', true, 'axes', true, 'axislabels', 'ijk', 'rlabels', false, 'alphas_and_fs', true, 'view', [ 20 60 ] );
         axis( [ 0 4.5 -1 2 -1.5 2 ] );
         exportgraphics( gcf, [ '../Figures/box_geometry_with_lines_and_angles_' num2str(k) '.png' ] );
     end
