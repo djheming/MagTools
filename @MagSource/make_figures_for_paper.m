@@ -24,13 +24,13 @@ end
 
 % Select which plots to generate by setting the appropriate variables to true.
 show_2D_box_geometry = true;
-show_3D_box_geometry = false;
-show_3D_coordinate_change = false;
-show_2D_Q_and_B = false;
-show_3D_Q_and_B = false;
-show_Blakely = false;
-show_Bongiolo = false;
-show_wire_plate_limits = false;
+show_3D_box_geometry = true;
+show_3D_coordinate_change = true;
+show_2D_Q_and_B = true;
+show_3D_Q_and_B = true;
+show_Blakely = true;
+show_Bongiolo = true;
+show_wire_plate_limits = true;
 show_wire_plate_movie = false;
 show_shape_movie = false;
 show_direction_movie = false;
@@ -55,7 +55,7 @@ if show_2D_box_geometry
     % Show the box in 2D, illustrating the evaluation point.
     for k = 1 : N
         ah = myBox.drawBox( 'p', p(:,k), 'axislabels', 'ijk', 'label_p', true, 'vertices', true, 'alphas_and_fs', true, 'zerocrossings', true, 'view', [ 0 90 ] );
-        exportgraphics( ancestor(ah,'figure'), sprintf('../Figures/2D_box_geometry_p(%s,%s).png', num2str(p(1,k)), num2str(p(2,k)) ) );
+        exportgraphics( ancestor(ah,'figure'), sprintf('%s/2D_box_geometry_p(%s,%s).png', figs_folder, num2str(p(1,k)), num2str(p(2,k)) ) );
     end
 
 end
@@ -74,13 +74,13 @@ if show_3D_box_geometry
 
     % Save orthographic and oblique views.
     view( ah, [ 0 90 ] ); % xy
-    exportgraphics( ah.Parent, '../Figures/3D_box_geometry_xy.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( ah.Parent, [ figs_folder '/3D_box_geometry_xy.png' ], 'ContentType', 'image', 'Resolution', 300 );
     view( ah, [ 0 0 ] ); % xz
-    exportgraphics( ah.Parent, '../Figures/3D_box_geometry_xz.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( ah.Parent, [ figs_folder '/3D_box_geometry_xz.png' ], 'ContentType', 'image', 'Resolution', 300 );
     view( ah, [ 90 0 ] ); % yz
-    exportgraphics( ah.Parent, '../Figures/3D_box_geometry_yz.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( ah.Parent, [ figs_folder '/3D_box_geometry_yz.png' ], 'ContentType', 'image', 'Resolution', 300 );
     view( ah, [ 39 47 ] );
-    exportgraphics( ah.Parent, '../Figures/3D_box_geometry_oblique.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( ah.Parent, [ figs_folder '/3D_box_geometry_oblique.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
 
     %
@@ -101,7 +101,7 @@ if show_3D_box_geometry
     for k = 1 : num_points
         myBox.drawBox( 'p', p(:,k), 'vertices', true, 'show_p_vector', true, 'label_p', true, 'shading', true, 'axes', true, 'axislabels', 'ijk', 'rlabels', false, 'alphas_and_fs', true, 'view', [ 20 60 ] );
         axis( [ 0 4.5 -1 2 -1.5 2 ] );
-        exportgraphics( gcf, [ '../Figures/box_geometry_with_lines_and_angles_' num2str(k) '.png' ] );
+        exportgraphics( gcf, [ figs_folder '/box_geometry_with_lines_and_angles_' num2str(k) '.png' ] );
     end
 
 end
@@ -121,7 +121,7 @@ if show_3D_coordinate_change
     ah = myBox.drawBox( 'axes', true, 'p', p, 'label_origin', true, 'show_p_vector', true, 'label_p_vector', true, 'view', [ 0 90 ] );
     axis( ah, 'off' );
     camlight;
-    exportgraphics( gcf, '../Figures/3D_coordinate_change.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( gcf, [ figs_folder '/3D_coordinate_change.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
 end
 if show_2D_Q_and_B
@@ -132,9 +132,9 @@ if show_2D_Q_and_B
     fine_2D_survey = SurveyField( linspace(-12,12), linspace(-12,12), 0 );
 
     % Show Q field.
-    fh = BaseTools.tile_figures( myBox.showQfieldContours( { 'xx', 'xy'; 'yx' 'yy' }, fine_2D_survey, 'title', true ) );
+    fh = BaseTools.tileFigures( myBox.showQfieldContours( { 'xx', 'xy'; 'yx' 'yy' }, fine_2D_survey, 'title', true ) );
     fh.Position(4) = 920;
-    exportgraphics( fh, '../Figures/2D_Q.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( fh, [ figs_folder '/2D_Q.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
     % Now show B field vectors over a grid, but highlighting the vectors
     % along the Qii and Qij zero crossings. Let's define a consistent
@@ -150,7 +150,7 @@ if show_2D_Q_and_B
     myBox.showBfieldVectors( ah, Qii_zc_survey, 'clr', [ .5 .2 .5 ], 'scale_factor', scale_factor );
     text( 0.03, 0.97, '(a)', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
     axis( [ -10 10 -10 10 ] );
-    exportgraphics( gcf, '../Figures/M_versus_B_directions_Qii_zero_crossings.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( gcf, [ figs_folder '/M_versus_B_directions_Qii_zero_crossings.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
     % Show B field vectors over a regular grid, then overlay colored
     % vectors where there are Qij zero crossings (two different kinds).
@@ -163,7 +163,7 @@ if show_2D_Q_and_B
     myBox.showBfieldVectors( ah, Qij_zc_survey_y, 'clr', [ .7 .4 .4 ], 'scale_factor', scale_factor );
     text( 0.03, 0.97, '(b)', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
     axis( [ -10 10 -10 10 ] );
-    exportgraphics( gcf, '../Figures/M_versus_B_directions_Qij_zero_crossings.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( gcf, [ figs_folder '/M_versus_B_directions_Qij_zero_crossings.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
 end
 if show_3D_Q_and_B
@@ -173,23 +173,23 @@ if show_3D_Q_and_B
     survey_volume = SurveyField( linspace(-8,8), linspace(-8,8), linspace(-8,8) );
 
     % Show Q field.
-    fh = BaseTools.tile_figures( myBox.showQfieldContours( 'all', survey_volume, 'title', true ) );
+    fh = BaseTools.tileFigures( myBox.showQfieldContours( 'all', survey_volume, 'title', true ) );
     fh.Position(3:4) = [ 950 1000 ];
-    exportgraphics( fh, '../Figures/3D_Q.png', 'ContentType', 'image', 'Resolution', 300 );
+    exportgraphics( fh, [ figs_folder '/3D_Q.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
     % Show B field.
-    fh = BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_volume, 'title', true, 'view', [ 25 15 ] ) );
-    exportgraphics( fh, '../Figures/3D_B.png', 'ContentType', 'image', 'Resolution', 300 );
+    fh = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'title', true, 'view', [ 25 15 ] ) );
+    exportgraphics( fh, [ figs_folder '/3D_B.png' ], 'ContentType', 'image', 'Resolution', 300 );
 
 end
 if show_Blakely
 
     % Reproduce finite-cube equivalent of Blakely's figures 4.9 and 4.10.
     fh = MagBox.unit_test('Blakely_Figs_4_9_4_10');
-    exportgraphics( fh{1}, '../Figures/Blakely_prism_Fig4-9.png' );
-    exportgraphics( fh{2}, '../Figures/Blakely_prism_Fig4-10.png' );
-    exportgraphics( fh{3}, '../Figures/Blakely_3D_vert.png' );
-    exportgraphics( fh{4}, '../Figures/Blakely_3D_horiz.png' );
+    exportgraphics( fh{1}, [ figs_folder '/Blakely_prism_Fig4-9.png' ] );
+    exportgraphics( fh{2}, [ figs_folder '/Blakely_prism_Fig4-10.png' ] );
+    exportgraphics( fh{3}, [ figs_folder '/Blakely_3D_vert.png' ] );
+    exportgraphics( fh{4}, [ figs_folder '/Blakely_3D_horiz.png' ] );
 
 end
 if show_Bongiolo
@@ -197,12 +197,12 @@ if show_Bongiolo
     % Reproduce a version of Figure 7 from Bongiolo et al. (2013).
     fh = MagEnsemble.unit_test('Bongiolo7');
     text( fh{1}.CurrentAxes, 0.03, 0.97, '(a)', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
-    exportgraphics( fh{1}, '../Figures/Bongiolo_Fig7.png' );
+    exportgraphics( fh{1}, [ figs_folder '/Bongiolo_Fig7.png' ] );
 
     % Show another example with a prism in a 3D rotation.
     fh = MagEnsemble.unit_test('mixed_orientation');
     text( 0.03, 0.97, '(b)', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
-    exportgraphics( fh, '../Figures/two_prisms_mixed_orientation.png' );
+    exportgraphics( fh, [ figs_folder '/two_prisms_mixed_orientation.png' ] );
 
 end
 if show_wire_plate_limits
@@ -212,16 +212,16 @@ if show_wire_plate_limits
     w = 1;
     myBox = MagBox( [ -w/2 w/2 ], [ -L/2 L/2 ], [ -w/2 w/2 ], [ 1 -.2 -.5 ]' );
     survey_volume = SurveyField( linspace(-L,L), linspace(-L,L), linspace(-L,L) );
-    fh = BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ -30 30 ], 'title', true ) );
-    exportgraphics( fh, '../Figures/3DB_long_wire.png' );
+    fh = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ -30 30 ], 'title', true ) );
+    exportgraphics( fh, [ figs_folder '/3DB_long_wire.png' ] );
 
     % Show a wide flat plate in 3D.
     w = 100;
     t = 1;
     myBox = MagBox( [ -w/2 w/2 ], [ -w/2 w/2 ], [ -t/2 t/2 ], [ 1 -.2 -.5 ]' );
     survey_volume = SurveyField( linspace(-w,w), linspace(-w,w), linspace(-w,w) );
-    fh = BaseTools.tile_figures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ -30 30 ], 'title', true ) );
-    exportgraphics( fh, '../Figures/3DB_wide_plate.png' );
+    fh = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ -30 30 ], 'title', true ) );
+    exportgraphics( fh, [ figs_folder '/3DB_wide_plate.png' ] );
 
 end
 if show_wire_plate_movie
@@ -235,7 +235,7 @@ if show_wire_plate_movie
         MagBox( [ -30 30 ], [ -1 1 ], [ -0.5 0.5 ], M );
         MagBox( [ -1 1 ], [ -1 1 ], [ -0.5 0.5 ], M );
         ];
-    keyBoxes.makeBmovie( '../Figures/3DB_wire_plate_cycle.mp4', 'fixed_moment', 600, 'b', 50, 'duration', 3 );
+    keyBoxes.makeBmovie( [ figs_folder '/3DB_wire_plate_cycle.mp4' ], 'fixed_moment', 600, 'b', 50, 'duration', 3 );
 
 end
 if show_shape_movie
@@ -249,7 +249,7 @@ if show_shape_movie
         MagBox( [ -1 1 ], [ -1 1 ], [ -10 0.5 ], M );
         MagBox( [ -1 1 ], [ -1 1 ], [ -0.5 0.5 ], M );
         ];
-    keyBoxes.makeBmovie( '../Figures/3DB_shape_cycle.mp4', 'fixed_moment', 200, 'b', 20, 'duration', 3 );
+    keyBoxes.makeBmovie( [ figs_folder '/3DB_shape_cycle.mp4' ], 'fixed_moment', 200, 'b', 20, 'duration', 3 );
     
 end
 if show_direction_movie
@@ -273,7 +273,7 @@ if show_direction_movie
         MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], [ -1 -1 -1 ]' );
         MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], [ 3 0 0 ]' );
         ];
-    keyBoxes.makeBmovie( '../Figures/3DB_direction_cycle.mp4', 'fixed_moment', 500, 'b', 40, 'duration', 4 );
+    keyBoxes.makeBmovie( [ figs_folder '/3DB_direction_cycle.mp4' ], 'fixed_moment', 500, 'b', 40, 'duration', 4 );
     
 end
 if show_semi_infinite_movies
@@ -297,7 +297,7 @@ if show_semi_infinite_movies
         MagBox( [ -10 10 ], [ -2 2 ], [ -.5 .5 ], M );
         MagBox( [ -10 0 ], [ -2 2 ], [ -.5 .5 ], M );
         ];
-    keyBoxes.makeBmovie( '../Figures/semi-infinite-cycle-both-sides.mp4', 'b', 50, 'duration', 3 );
+    keyBoxes.makeBmovie( [ figs_folder '/semi-infinite-cycle-both-sides.mp4' ], 'b', 50, 'duration', 3 );
 
 end
 
