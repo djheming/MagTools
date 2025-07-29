@@ -16,24 +16,16 @@ function ah = drawBox( thisMagBox, varargin )
 %
 
 
-% Look at input arguments. The first one should be an axis handle. If not,
-% we can make a new figure internally and return the new axis handle. All
-% additional input arguments should be in name/value pairs.
-% TO DO: update this with new handling of leading positional arguments.
-if ~isempty(varargin)
-    if ~ischar(varargin{1}) && ishandle(varargin{1})
-        ah = varargin{1};
-        opt_args = varargin(2:end);
-    else
-        opt_args = varargin;
-    end
-else
-    opt_args = [];
-end
-
-% Parse input arguments.
+% Read input arguments.
 def_args = { 'overlay', true, 'axislabels', 'xyz', 'box_clr', [ .4 .4 .4 ], 'axes', false, 'label_origin', false, 'show_p_vector', false, 'label_p_vector', false, 'label_p', false, 'faces', true, 'vertices', false, 'verts_from_origin', [], 'rlabels', true, 'show_M', false, 'M_length', [] };
-args = BaseTools.argarray2struct( [ def_args opt_args ] );
+args = BaseTools.argarray2struct( varargin, def_args );
+
+% Check leading positional arguments for an axis handle.
+for k = 1 : length(args.posArgs)
+    if isa( args.posArgs{k}, 'matlab.graphics.axis.Axes' )
+        ah = args.posArgs{k};
+    end
+end
 
 % Other settings.
 p_clr = [ 0 .4 0 ];
@@ -44,9 +36,9 @@ FS_clr = [ .4 .4 .4 ];
 if ~exist( 'ah', 'var' ) || ~ishandle( ah )
     fh = figure;
     ah = axes('Parent',fh);
-    xlabel('x');
-    ylabel('y');
-    zlabel('z');
+    xlabel(args.axislabels(1));
+    ylabel(args.axislabels(2));
+    zlabel(args.axislabels(3));
 else
     % Remember the axis limits and go back to them at the end.
     axlims = axis(ah);
@@ -86,7 +78,7 @@ if args.axes
         % Draw vector connecting the two frames.
         BaseTools.drawArrow( ah, [ 0 thisMagBox.v_AS(1) ], [ 0 thisMagBox.v_AS(2) ], [ 0 thisMagBox.v_AS(3) ], 'Color', FS_clr, 'LineWidth', 2.0, 'LineStyle', '--', 'headlength', 0.1 );
         if args.label_origin
-            text( ah, 0.6*thisMagBox.v_AS(1), 0.6*thisMagBox.v_AS(2), 0.6*thisMagBox.v_AS(3), 'v^{AS}', 'Color', FS_clr, 'FontWeight', 'bold', 'FontSize', 16, 'HorizontalAlignment', 'right' );
+            text( ah, 0.6*thisMagBox.v_AS(1), 0.6*thisMagBox.v_AS(2), 0.6*thisMagBox.v_AS(3), 'v^{AS}', 'Color', FS_clr, 'FontWeight', 'bold', 'FontSize', 14, 'HorizontalAlignment', 'right' );
         end
 
     end
@@ -225,7 +217,9 @@ if isfield( args, 'p' )
     if args.show_p_vector
         BaseTools.drawArrow( ah, [ 0 args.p(1) ], [ 0 args.p(2) ], [ 0 args.p(3) ], 'Color', p_clr, 'LineWidth', 2.0, 'headlength', 0.1 );
         if isfield( args, 'label_p_vector' ) && args.label_p_vector
-            text( ah, 0.8*args.p(1), 0.8*args.p(2), 0.8*args.p(3), 'p^{(A)}', 'Color', p_clr, 'FontWeight', 'bold', 'FontSize', 16, 'HorizontalAlignment', 'right' );
+            text( ah, 0.8*args.p(1), 0.8*args.p(2), 0.8*args.p(3), 'p^{(A)}', 'Color', p_clr, 'FontWeight', 'bold', 'FontSize', 14, 'HorizontalAlignment', 'right' );
+        elseif args.label_p
+            text( 1.05*args.p(1), 1.05*args.p(2), 1.05*args.p(3), 'p', 'FontSize', 14, 'FontWeight', 'bold', 'Color', p_clr, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', 'FontSize', 14 );
         end
     end
 
@@ -234,7 +228,7 @@ if isfield( args, 'p' )
         BaseTools.drawArrow( ah, [ thisMagBox.v_AS(1) args.p(1) ], [ thisMagBox.v_AS(2) args.p(2) ], [ thisMagBox.v_AS(3) args.p(3) ], 'Color', pS_clr, 'LineWidth', 2.0, 'headlength', 0.1 );
         if isfield( args, 'label_p_vector' ) && args.label_p_vector
             pS = args.p - thisMagBox.v_AS;
-            text( ah, 0.8*pS(1)+thisMagBox.v_AS(1), 0.8*pS(2)+thisMagBox.v_AS(2), 0.8*pS(3)+thisMagBox.v_AS(3), 'p^{(S)}', 'Color', pS_clr, 'FontWeight', 'bold', 'FontSize', 16, 'HorizontalAlignment', 'right' );
+            text( ah, 0.8*pS(1)+thisMagBox.v_AS(1), 0.8*pS(2)+thisMagBox.v_AS(2), 0.8*pS(3)+thisMagBox.v_AS(3), 'p^{(S)}', 'Color', pS_clr, 'FontWeight', 'bold', 'FontSize', 14, 'HorizontalAlignment', 'right' );
         end
     end
 
@@ -266,7 +260,7 @@ if isfield( args, 'p' )
 
         % If p is not already shown, show it here in the same color as the
         % r vectors.
-        if args.label_p && ( ~args.show_p_vector || ~args.label_p_vector )
+        if ~args.show_p_vector
             text( args.p(1), args.p(2), args.p(3), 'p', 'FontSize', 14, 'FontWeight', 'bold', 'Color', [ 0 0.5 1 ], 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom', 'FontSize', 14 );
         end
 
@@ -347,7 +341,7 @@ if isfield( args, 'p' )
             h = annotation( 'textbox', [0, 0, 0.1, 0.1], ...
                 'String', { Qii_txt, Qij_txt }, ...
                 'Color', af_txt_clr, 'HorizontalAlignment', 'center', ...
-                'FitBoxToText', 'on', 'BackgroundColor', 'w', 'EdgeColor', 'none' );
+                'FitBoxToText', 'on', 'BackgroundColor', 'none', 'EdgeColor', 'none' );
             drawnow;
             h.Position(1) = 0.5 - h.Position(3)/2;
             h.Position(2) = 0.8;
@@ -362,7 +356,7 @@ if isfield( args, 'p' )
                 pQiizc = thisMagBox.computeQiiZeros( linspace(-b,b,41) );
                 plot( ah, pQiizc(1,:), pQiizc(2,:), 'k--', 'LineWidth', 1.5 );
                 pQijzc = thisMagBox.computeQijZeros( linspace(-b,b,41) );
-                plot( ah, pQijzc(1,:), pQijzc(2,:), 'k:', 'LineWidth', 1.0 );
+                plot( ah, pQijzc(1,:), pQijzc(2,:), 'k:', 'LineWidth', 1.5 );
             else
                 error( 'Not implemented for infinite extent in x or y dimensions.' );
             end
@@ -413,4 +407,4 @@ ph.FaceAlpha = 0.4 + 0.2*ori;
 theta3 = theta2 - ori*0.15;
 xe = x0 + r*1.3 * cos(theta3);
 ye = y0 + r*1.3 * sin(theta3);
-text( xe, ye, lbl, 'Color', clr, 'FontSize', 16, 'HorizontalAlignment', 'center' );
+text( xe, ye, lbl, 'Color', clr, 'FontSize', 14, 'HorizontalAlignment', 'center' );
