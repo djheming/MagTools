@@ -64,9 +64,24 @@ if ~any( isinf(rk(:,1)) )
         end
     end
 
-    % Compute Qij from the f_ab ratios.
-    % This output is already in the desired 1x1xN layout.
-    Qij = log( (f_ab(1,1,:).*f_ab(2,2,:))./(f_ab(1,2,:).*f_ab(2,1,:)) );
+    % We could compute Qij from the f_ab ratios with
+    % Qij = log( (f_ab(1,1,:).*f_ab(2,2,:))./(f_ab(1,2,:).*f_ab(2,1,:)) ); 
+    % but this does not handle singularities properly. Instead, we'll start
+    % from the ts terms. When the evaluation point is aligned with the ij
+    % edge of the prism, and if rkc<0, the corresponding ts is zero and so
+    % its logarithm will be -Infinity. Outside the prism, these always come
+    % in cancelling pairs, so we can simply replace those log(ts) terms
+    % with zero.
+    logts = log(ts);
+    ts0inds = isinf(logts);
+    logts(ts0inds) = 0;
+    [as, bs, cs] = ndgrid(1:2, 1:2, 1:2);
+    S = repmat( -(-1).^(as + bs + cs), 1, 1, 1, N ); % Places correct sign in front of logarithm terms.
+    A15terms = S .* logts; % A15 refers to the equation in the paper.
+    Qij = sum( A15terms, [ 1 2 3 ] ); 
+    
+    % Reshape to get the desired 1x1xN layout.
+    Qij = reshape( Qij, 1, 1, [] );
 
 else
 
