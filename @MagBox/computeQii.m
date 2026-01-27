@@ -52,7 +52,7 @@ for a = [ 1 2 ]
                 thetas(a,b,c,:) = (-1)^(a+b+c) * atan( sign(rk(c,1)) * rj(b,:)./ri(a,:) );
             else
                 Rabc = sqrt( ri(a,:).^2 + rj(b,:).^2 + rk(c,:).^2 );
-                thetas(a,b,c,:) = (-1)^(a+b+c) * atan( (rj(b,:).*rk(c,:))./(ri(a,:).*Rabc) );
+                thetas(a,b,c,:) = (-1)^(a+b+c) * atan2( (rj(b,:).*rk(c,:)), (ri(a,:).*Rabc) );
             end
         end
     end
