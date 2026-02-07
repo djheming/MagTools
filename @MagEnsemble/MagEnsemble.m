@@ -97,7 +97,7 @@ classdef MagEnsemble < MagSource
         end
 
         % Display functions.
-        function drawEnsemble( thisMagEnsemble, varargin )
+        function ah = drawEnsemble( thisMagEnsemble, varargin )
             if ~isempty(varargin) && ishandle(varargin{1})
                 ah = varargin{1};
                 opt_args = varargin(2:end);
@@ -122,7 +122,6 @@ classdef MagEnsemble < MagSource
         % Testing.
         function varargout = unit_test( type )
 
-            close all;
             if ~exist( 'type', 'var' )
                 type = 'baseline';
             end
