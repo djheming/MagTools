@@ -91,7 +91,19 @@ if sum(survey.nonsingdims) > 1
 
         % Show the source body or bodies as well.
         if sum(survey.nonsingdims) > 1 && args.show_source
-            thisSource.drawSource( ah );
+            thisSource.drawSource( ah, 'show_M', false );
+            % If the source extends beyond the survey domain, it will have
+            % expanded the figure. We'll need to scale back to the survey
+            % domain.
+            if survey.nonsingdims(1)
+                ah.XLim = [ min(survey.xv) max(survey.xv) ];
+            end
+            if survey.nonsingdims(2)
+                ah.YLim = [ min(survey.yv) max(survey.yv) ];
+            end
+            if survey.nonsingdims(3)
+                ah.ZLim = [ min(survey.zv) max(survey.zv) ];
+            end
         end
 
         % Optionally add a title.
