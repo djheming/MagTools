@@ -17,8 +17,8 @@ function ah = drawBox( thisMagBox, varargin )
 
 
 % Read input arguments.
-def_args = { 'overlay', true, 'axislabels', 'xyz', 'box_clr', [ .4 .4 .4 ], 'axes', false, 'label_origin', false, 'show_p_vector', false, 'label_p_vector', false, 'label_p', false, 'faces', true, 'vertices', false, 'verts_from_origin', [], 'rlabels', true, 'show_M', false, 'M_length', [] };
-args = BaseTools.argarray2struct( varargin, def_args );
+def_args = { 'overlay', true, 'axislabels', 'xyz', 'box_clr', [ .4 .4 .4 ], 'axes', false, 'label_origin', false, 'show_p_vector', false, 'label_p_vector', false, 'label_p', false, 'faces', true, 'vertices', false, 'verts_from_origin', [], 'rlabels', true, 'show_M', true, 'M_length', [] };
+[ args, optargs ] = BaseTools.argarray2struct( varargin, def_args );
 
 % Check leading positional arguments for an axis handle.
 for k = 1 : length(args.posArgs)
@@ -31,17 +31,15 @@ end
 p_clr = [ 0 .4 0 ];
 pS_clr = [ 0 .6 0 ];
 FS_clr = [ .4 .4 .4 ];
+M_clr = [ .3 0 .2 ];
 
 % Verify that we have a plot axis and bring it into focus.
 if ~exist( 'ah', 'var' ) || ~ishandle( ah )
     fh = figure;
     ah = axes('Parent',fh);
-    xlabel(args.axislabels(1));
-    ylabel(args.axislabels(2));
-    zlabel(args.axislabels(3));
-else
-    % Remember the axis limits and go back to them at the end.
-    axlims = axis(ah);
+    xlabel(ah,args.axislabels(1));
+    ylabel(ah,args.axislabels(2));
+    zlabel(ah,args.axislabels(3));
 end
 hold(ah,'on');
 grid(ah,'on');
@@ -186,7 +184,8 @@ if args.show_M
     if ~isempty( args.M_length )
         lenM = lenM/args.M_length;
     end
-    BaseTools.drawArrow( ah, thisMagBox.x0+[ 0 thisMagBox.M(1)/lenM ], thisMagBox.y0+[ 0 thisMagBox.M(2)/lenM ], thisMagBox.z0+[ 0 thisMagBox.M(3)/lenM ], 'Color', 'k', 'LineWidth', 2.0 );
+    M_tail_head = [ thisMagBox.cenA thisMagBox.cenA+thisMagBox.MA/lenM ];
+    BaseTools.drawArrow( ah, M_tail_head(1,:), M_tail_head(2,:), M_tail_head(3,:), 'Color', M_clr, 'LineWidth', 2.0, optargs{:} );
 end
 
 % If the user wishes to show vectors connecting the origin to some of the
