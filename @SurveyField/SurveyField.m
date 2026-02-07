@@ -63,7 +63,7 @@ classdef SurveyField
                     wy = src.yrng(2)-src.yrng(1);
                     wz = src.zrng(2)-src.zrng(1);
                     ws = [ wx wy wz ];
-                    padding = 2*max( ws(~isinf(ws)) );
+                    padding = 2*max( [ ws(~isinf(ws)) 1 ] );
                     if ~isinf(wx)
                         survey.xv = linspace( src.xrng(1)-padding, src.xrng(2)+padding );
                     else
