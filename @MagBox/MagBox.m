@@ -84,11 +84,14 @@ classdef MagBox < MagSource
         x0 % prism's center in x-direction in its own frame.
         y0 % prism's center in y-direction in its own frame.
         z0 % prism's center in z-direction in its own frame.
+        cenS % (3x1 vector) summarizing prism's centroid in its own frame (x0,y0,z0).
         finitedims % (logical) identifies which dimensions are finite
         finitefaces % (3x2 logical) identifying which faces are finite
 
         R_SA % the inverse of the R_AS rotation matrix
+        MA % (3x1 vector) magnetization (A/m) in the analysis frame.
         vA % (3x8 array) vector positions of each of the 8 vertices in the analysis frame.
+        cenA % (3x1 vector) vector position of prism centroid in the analysis frame.
         xrng % (1x2 array) range of x positions spanned by the box in the analysis frame.
         yrng % (1x2 array) range of y positions spanned by the box in the analysis frame.
         zrng % (1x2 array) range of z positions spanned by the box in the analysis frame.
@@ -135,8 +138,18 @@ classdef MagBox < MagSource
             thisMagBox.int_vz = sort(new_vz);
         end
 
+        % Allow the user to set M directly.
+        function thisMagBox = set.M( thisMagBox, new_M )
+            % If the user is trying to directly set the total M, we have to
+            % assume they want a remanent magnetization only (i.e., does
+            % not depend on the ambient field).
+            thisMagBox.Mr = new_M;
+            thisMagBox.chi = 0; % This will make Mi = 0.
+        end
+
         % Simple getter methods.
         function Mr = get.Mr( thisMagBox )
+            % Return remanent magnetization vector. Zero of not set.
             if isempty( thisMagBox.Mr )
                 Mr = zeros(3,1);
             else
@@ -144,6 +157,8 @@ classdef MagBox < MagSource
             end
         end
         function Mi = get.Mi( thisMagBox )
+            % Return induced magnetization given ambient field and magnetic
+            % susceptibility. Return zero if either of those is missing.
             if ~isempty( thisMagBox.chi ) && ~isempty( thisMagBox.Ba )
                 Mi = thisMagBox.Ba * thisMagBox.chi / MagSource.mu_naught;
             else
@@ -151,6 +166,7 @@ classdef MagBox < MagSource
             end
         end
         function M = get.M( thisMagBox )
+            % Total magnetization vector is the remanent plus induced M.
             M = thisMagBox.Mr + thisMagBox.Mi;
         end
         function vx = get.vx( thisMagBox )
@@ -183,6 +199,12 @@ classdef MagBox < MagSource
             else
                 vA = thisMagBox.v_AS + thisMagBox.R_AS * thisMagBox.vS;
             end
+        end
+        function MA = get.MA( thisMagBox )
+            MA = thisMagBox.R_AS * thisMagBox.M;
+        end
+        function cenA = get.cenA( thisMagBox )
+            cenA = thisMagBox.v_AS + thisMagBox.R_AS * thisMagBox.cenS;
         end
         function xrng = get.xrng( thisMagBox )
             xrng = [ min(thisMagBox.vA(1,:)) max(thisMagBox.vA(1,:)) ];
@@ -238,6 +260,9 @@ classdef MagBox < MagSource
             else
                 z0 = ( thisMagBox.vz(1)+thisMagBox.vz(2) )/2;
             end
+        end
+        function cenS = get.cenS( thisMagBox )
+            cenS = [ thisMagBox.x0; thisMagBox.y0; thisMagBox.z0 ];
         end
         function R_SA = get.R_SA( thisMagBox )
             R_SA = thisMagBox.R_AS';
@@ -319,8 +344,66 @@ classdef MagBox < MagSource
 
         % Display functions.
         ah = drawBox( thisMagBox, varargin )
+        function fh = showM( thisMagBox, varargin )
+            % TO DO: make this nicer!
+            [ args, optargs ] = BaseTools.argarray2struct(varargin, { 'Color', 'r', 'Color2', [.6 .6 .6], 'show_comps', false, 'comps', 'xyz', 'view', [] });
+            lenM = norm(thisMagBox.M);
+            if isfield( args, 'M_length' ) && ~isempty( args.M_length )
+                lenM = lenM/args.M_length;
+            end
+            Mdisp_x = thisMagBox.x0+[ 0 thisMagBox.M(1)/lenM ];
+            Mdisp_y = thisMagBox.y0+[ 0 thisMagBox.M(2)/lenM ];
+            Mdisp_z = thisMagBox.z0+[ 0 thisMagBox.M(3)/lenM ];
+            if isfield( args, 'show_comps' ) && args.show_comps
+                headlength = 1/10;
+                fi = gobjects(size(args.comps));
+                for i = 1 : numel(args.comps)
+                    [ ai, fi(i) ] = BaseTools.verify_axes_handle;
+                    BaseTools.drawArrow( ai, Mdisp_x*(strcmp(args.comps(i),'x')), Mdisp_y*(strcmp(args.comps(i),'y')), Mdisp_z*(strcmp(args.comps(i),'z')), 'LineWidth', 2.0, 'Color', args.Color, 'headlength', headlength );
+                    BaseTools.drawArrow( ai, Mdisp_x, Mdisp_y, Mdisp_z, 'LineWidth', 2.0, 'Color', args.Color2, 'headlength', headlength, 'view', args.view );
+                end
+                fh = BaseTools.tileFigures( fi' );
+            else
+                [ ah, fh ] = BaseTools.extractAxesHandle( args );
+                BaseTools.drawArrow( ah, Mdisp_x, Mdisp_y, Mdisp_z, 'LineWidth', 2.0, optargs{:} );
+                if isfield( args, 'view' ) && ~isempty( args.view )
+                    view( ah, args.view );
+                    camlight; % Give it some 3D lighting.
+                end
+            end
+        end
 
         % Make a movie from a set of key frames.
+        function previewBmovie( keyBoxes, varargin )
+
+            % Parse input arguments.
+            args = BaseTools.argarray2struct( varargin, { 'duration', 3, 'fixed_moment', [], 'b', 12 } );
+            num_keys = length(keyBoxes);
+
+            % Do we need to normalize the magnetic moments?
+            if isfield( args, 'fixed_moment' ) && ~isempty( args.fixed_moment )
+                for t = 1 : num_keys
+                    keyBoxes(t).M = keyBoxes(t).M * args.fixed_moment/keyBoxes(t).mtot;
+                end
+            end
+            survey_volume = SurveyField( linspace(-args.b,args.b), linspace(-args.b,args.b), linspace(-args.b,args.b) );
+
+            % If the prism geometry is not changing, we can pre-compute Q
+            % and avoid having to re-compute it every time we compute B.
+            if consistent_geometry( keyBoxes )
+                Q = keyBoxes(1).computeQfield( survey_volume.p );
+                fprintf( 'Prism geometry is fixed so we can pre-compute Q.\n' );
+            else
+                Q = [];
+            end
+
+            % Display all of the key frames.
+            for t = 1 : num_keys
+                myBox = keyBoxes(t);
+                BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'Q', Q, 'view', [ 25 15 ], 'title', true ), 1, 3 );
+            end
+            
+        end        
         function makeBmovie( keyBoxes, output_filename, varargin )
 
             % Parse input arguments.
@@ -541,6 +624,61 @@ classdef MagBox < MagSource
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_plane ) );
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz' ) );
                     
+                case 'singularities'
+
+                    % Common settings.
+                    M = [ 2 0.5 -1 ]'; % Keep the same magnetization for all.
+                    d = 0.5; % Coarse grid spacing.
+                    survey_volume = SurveyField( linspace(-10,10), linspace(-10,10), linspace(-10,10) );
+                    z0 = 2; % Finite end position for semi-infinite prisms.
+
+                    %
+                    % Finite prism.
+                    %
+                    myBox = MagBox( [ 1 2 ], [ 2 4 ], [ 2 5 ], M );
+                    BaseTools.tileFigures( myBox.showBfieldContours('xyz') );
+                    xv = myBox.xrng(1)-1:d:myBox.xrng(2)+1;
+                    yv = myBox.yrng(1)-1:d:myBox.yrng(2)+1;
+                    zv = myBox.zrng(1)-1:d:myBox.zrng(2)+1;
+                    myBox.showBfieldVectors( SurveyField( xv, yv, min(zv) ) );
+                    myBox.showBfieldVectors( SurveyField( xv, min(yv), zv ) );
+                    myBox.showBfieldVectors( SurveyField( min(xv), yv, zv ) );
+                    myBox.showBfieldVectors( SurveyField( xv, yv, max(zv) ) );
+                    myBox.showBfieldVectors( SurveyField( xv, max(yv), zv ) );
+                    myBox.showBfieldVectors( SurveyField( max(xv), yv, zv ) );
+
+                    %
+                    % Semi-infinite (and quasi-semi-infinite) prisms.
+                    %
+                    for s = [ -1 1 ] % One side and then the other.
+                        for far = [ 100 Inf ] % For each side, do a finite and infinite limit for the far end.
+                            myBox = MagBox( [ 1 2 ], [ 2 4 ], sign(s)*[ z0 far ], M );
+                            BaseTools.tileFigures( myBox.showBfieldContours('xyz',survey_volume) );
+                            myBox.showBfieldVectors( SurveyField( xv, yv, 0 ) );
+                        end
+                    end
+
+                    %
+                    % Infinite prism.
+                    %
+                    myBox = MagBox( [ 1 2 ], [ 2 4 ], [ -Inf Inf ], M );
+                    BaseTools.tileFigures( myBox.showBfieldContours('xyz') );
+
+                    %
+                    % Wide slab.
+                    %
+                    wide_survey = SurveyField( linspace(-300,300), linspace(-300,300), linspace(-200,200) );
+                    myBox = MagBox( [ -100 100 ], [ -200 200 ], [ 2 5 ], M );
+                    BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );
+                    myBox = MagBox( [ -Inf Inf ], [ -200 200 ], [ 2 5 ], M );
+                    BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );
+                    myBox = MagBox( [ -Inf Inf ], [ -Inf 200 ], [ 2 5 ], M );
+                    BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
+                    myBox = MagBox( [ -Inf 100 ], [ -Inf 200 ], [ 2 5 ], M );
+                    BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
+                    myBox = MagBox( [ -Inf 100 ], [ -Inf 200 ], [ -Inf 5 ], M );
+                    BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
+
                 case 'staticQ'
 
                     % Construct a prism with static dimensions but then
@@ -563,13 +701,14 @@ classdef MagBox < MagSource
                     Bx_grid = nan(num_thetas,survey.Np);
 
                     % Populate the B grid.
-                    tic
+                    tic;
                     for k = 1 : num_thetas
-                        myBox.M = M(:,k);
+                        myBox.Mr = M(:,k);
                         thisB = myBox.computeBfield(survey.p);
                         Bx_grid(k,:) = thisB(1,:);
                     end
-                    toc
+                    t_elapsed = toc;
+                    fprintf( 'Computation time without pre-computing Q = %s\n', BaseTools.timetostr(t_elapsed) );
 
                     % Show results.
                     figure;
@@ -583,13 +722,14 @@ classdef MagBox < MagSource
                     % once.
                     Q = myBox.computeQfield(survey.p);
                     Bx_grid = nan(num_thetas,survey.Np);
-                    tic
+                    tic;
                     for k = 1 : num_thetas
-                        myBox.M = M(:,k);
+                        myBox.Mr = M(:,k);
                         thisB = myBox.computeBfield(survey.p,'Q',Q);
                         Bx_grid(k,:) = thisB(1,:);
                     end
-                    toc
+                    t_elapsed = toc;
+                    fprintf( 'Computation time with pre-computing Q = %s\n', BaseTools.timetostr(t_elapsed) );
 
                     % Show results.
                     figure;
