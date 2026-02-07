@@ -69,7 +69,7 @@ classdef MagDipoles < MagSource
                 % Here, the user is supplying the dimensions of a box,
                 % which we will fill with dipoles at the specified
                 % resolution and with the specified equivalent total
-                % magnetic moment (specified as a 3x1 vector, M).
+                % magnetic moment (specified as a 3x1 vector, m).
                 xvals = varargin{1};
                 yvals = varargin{2};
                 zvals = varargin{3};
