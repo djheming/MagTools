@@ -8,8 +8,8 @@ function Q = computeQfield( thisMagBox, p, varargin )
 % The input array p is a 3xN matrix whose rows represent the x, y, z,
 % components, and whose columns represent N different positions. 
 % The output is a 3x3xN matrix. The matrices can be used to relate the
-% magnetization vector (M) to the resulting B-field (see compute_B_field
-% for magBox). 
+% magnetization vector (M) to the resulting B-field (see computeBfield
+% for MagBox). 
 %
 % IMPORTANT: the positions defined by p must be expressed
 % in the magnetized prism's own preferred source coordinate system.
