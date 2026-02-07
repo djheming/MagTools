@@ -29,13 +29,13 @@ classdef MagSource < matlab.mixin.Heterogeneous
         fh = showBfieldContours( thisSource, component, varargin )
         fh = showBfieldVectors( thisSource, varargin )
         fh = showBfieldLines( thisSource, varargin )
-        function drawSource( thisSource, ah, varargin )
+        function ah = drawSource( thisSource, ah, varargin )
             if isa( thisSource, 'MagBox' )
-                thisSource.drawBox( ah, varargin{:} );
+                ah = thisSource.drawBox( ah, varargin{:} );
             elseif isa( thisSource, 'MagDipoles' )
-                thisSource.drawDipoles( ah, varargin{:} );
+                ah = thisSource.drawDipoles( ah, varargin{:} );
             elseif isa( thisSource, 'MagEnsemble' )
-                thisSource.drawEnsemble( ah, varargin{:} );
+                ah = thisSource.drawEnsemble( ah, varargin{:} );
             end
         end
 
@@ -102,9 +102,6 @@ classdef MagSource < matlab.mixin.Heterogeneous
         
         % For illustration purposes.
         cmap = magcolors( n )
-        
-        % Test functions.
-        make_figures_for_paper( figs_folder )
         
     end
     
