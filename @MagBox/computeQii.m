@@ -44,19 +44,26 @@ alphas = nan(2,N);
 for a = [ 1 2 ]
     for b = [ 1 2 ]
         for c = [ 1 2 ]
+            s_abc = (-1)^(a+b+c);
             if isinf(ri(a,1))
                 thetas(a,b,c,:) = 0;
             elseif isinf(rj(b,1))
-                thetas(a,b,c,:) = (-1)^(a+b+c) * atan( sign(rj(b,1)) * rk(c,:)./ri(a,:) );
+                thetas(a,b,c,:) = s_abc * sign(rj(b,1)) * atan( rk(c,:)./ri(a,:) );
             elseif isinf(rk(c,1))
-                thetas(a,b,c,:) = (-1)^(a+b+c) * atan( sign(rk(c,1)) * rj(b,:)./ri(a,:) );
+                thetas(a,b,c,:) = s_abc * sign(rk(c,1)) * atan( rj(b,:)./ri(a,:) );
             else
                 Rabc = sqrt( ri(a,:).^2 + rj(b,:).^2 + rk(c,:).^2 );
-                thetas(a,b,c,:) = (-1)^(a+b+c) * atan2( (rj(b,:).*rk(c,:)), (ri(a,:).*Rabc) );
+                thetas(a,b,c,:) = s_abc * atan( (rj(b,:).*rk(c,:)) ./ (ri(a,:).*Rabc) );
             end
         end
     end
 end
+
+% If there are any evaluation points collinear with the edge of a
+% semi-infinite prism, we'll have hit some 0/0 divisions. In these cases,
+% the angles should really be zero.
+badthetas = isnan(thetas);
+thetas(badthetas) = 0;
 
 % Sum across thetas to get alphas.
 alphas(1,:) = sum(thetas(1,:,:,:),[ 2 3 ]);
