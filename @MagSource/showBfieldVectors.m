@@ -39,7 +39,7 @@ num_surveys = length(survey);
 if num_surveys > 1
     fh = cell(num_surveys,1);
     for k = 1 : num_surveys
-        fh{k} = thisSource.showBfieldContours( component, survey(k), varargin{:} );
+        fh{k} = thisSource.showBfieldVectors( component, survey(k), varargin{:} );
     end
     return;
 end
@@ -60,4 +60,15 @@ if ~exist( 'ah', 'var' ) || isempty( ah )
 else
     fh = ancestor(ah,'figure');
 end
+if isfield( args, 'view' ) && ~isempty( args.view )
+    view( args.view );
+end
+
+% Optionally draw the source.
+if args.show_source
+    thisSource.drawSource( ah, optargs{:} );
+end
+
+% Overlay vector field.
 MagSource.drawBfieldVectors( ah, survey, B, optargs{:} );
+
