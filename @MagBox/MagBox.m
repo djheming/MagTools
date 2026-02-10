@@ -480,7 +480,7 @@ classdef MagBox < MagSource
 
         % Core functions for computing elements of Q.
         [ Qii, alphas, thetas ] = computeQii( ri, rj, rk )
-        [ Qij, f_ab, f_c, ts, Rsq ] = computeQij( ri, rj, rk )
+        [ Qij, f_ab, rho_ab ] = computeQij( ri, rj, rk )
         
         % Basic calculations.
         function y_zero = compute_Qii_zeros( x, wx, wy )
@@ -530,7 +530,6 @@ classdef MagBox < MagSource
         % Testing.
         function varargout = unit_test( type )
 
-            close all;
             if ~exist( 'type', 'var' )
                 type = 'Blakely_Figs_4_9_4_10';
             end
@@ -624,12 +623,37 @@ classdef MagBox < MagSource
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_plane ) );
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz' ) );
                     
-                case 'singularities'
+                case 'inspect_singularities'
+
+                    % Common settings.
+                    M = [ 2 0.5 -1 ]'; % Keep the same magnetization for all.
+                    surveygrid = SurveyField( -1:0, 0, 0 ); % Just look at two specific points.
+                    baselineBox = MagBox( [ 0 1 ], [ 0 2 ], [ -1 1 ], M );
+
+                    % Baseline finite prism.
+                    myBox = baselineBox;
+                    MagBox.show_prism_z_permutations( myBox, surveygrid );
+
+                    % Make it semi-infinite in the x direction.
+                    myBox.vx = [ 0 Inf ];
+                    MagBox.show_prism_z_permutations( myBox, surveygrid );
+
+                    % Make it semi-infinite in the x and y directions.
+                    myBox.vx = [ 0 Inf ];
+                    myBox.vy = [ 0 Inf ];
+                    MagBox.show_prism_z_permutations( myBox, surveygrid );
+
+                    % Make it infinite in the y direction.
+                    myBox.vy = [ -Inf Inf ];
+                    MagBox.show_prism_z_permutations( myBox, surveygrid );
+                    
+                case 'show_singularities'
 
                     % Common settings.
                     M = [ 2 0.5 -1 ]'; % Keep the same magnetization for all.
                     d = 0.5; % Coarse grid spacing.
-                    survey_volume = SurveyField( linspace(-10,10), linspace(-10,10), linspace(-10,10) );
+                    f = 0.2; % Fine grid spacing.
+                    survey_volume = SurveyField( -10:f:10, -10:f:10, -10:f:10 );
                     z0 = 2; % Finite end position for semi-infinite prisms.
 
                     %
@@ -654,7 +678,7 @@ classdef MagBox < MagSource
                         for far = [ 100 Inf ] % For each side, do a finite and infinite limit for the far end.
                             myBox = MagBox( [ 1 2 ], [ 2 4 ], sign(s)*[ z0 far ], M );
                             BaseTools.tileFigures( myBox.showBfieldContours('xyz',survey_volume) );
-                            myBox.showBfieldVectors( SurveyField( xv, yv, 0 ) );
+                            % myBox.showBfieldVectors( SurveyField( xv, yv, 0 ) );
                         end
                     end
 
@@ -667,7 +691,7 @@ classdef MagBox < MagSource
                     %
                     % Wide slab.
                     %
-                    wide_survey = SurveyField( linspace(-300,300), linspace(-300,300), linspace(-200,200) );
+                    wide_survey = SurveyField( -300:5:300, -300:5:300, -200:5:200 );
                     myBox = MagBox( [ -100 100 ], [ -200 200 ], [ 2 5 ], M );
                     BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );
                     myBox = MagBox( [ -Inf Inf ], [ -200 200 ], [ 2 5 ], M );
@@ -740,6 +764,73 @@ classdef MagBox < MagSource
                     ylabel( '\theta' );
 
             end            
+
+        end
+
+        % Test helper functions.
+        function fh = show_prism_z_permutations( myBox, surveygrid )
+
+            % Setup.
+            L = 1e6;
+            crng = [ -4 4 ];
+            fh = gobjects(6,surveygrid.Np);
+
+            % Finite prism.
+            myBox.vz = [ -1 1 ];
+            Q = myBox.computeQfield(surveygrid.p);
+            for p = 1 : surveygrid.Np
+                fh(1,p) = figure;
+                imagesc(Q(:,:,p)); clim( crng );
+                title( 'Finite prism' );
+            end
+
+            % Finite tall prism, viewed from above.
+            myBox.vz = [ -L -1 ];
+            Q = myBox.computeQfield(surveygrid.p);
+            for p = 1 : surveygrid.Np
+                fh(2,p) = figure;
+                imagesc(Q(:,:,p)); clim( crng );
+                title( 'Finite tall prism, viewed from above' );
+            end
+
+            % Semi-infinite, viewed from above.
+            myBox.vz = [ -Inf -1 ];
+            Q = myBox.computeQfield(surveygrid.p);
+            for p = 1 : surveygrid.Np
+                fh(3,p) = figure;
+                imagesc(Q(:,:,p)); clim( crng );
+                title( 'Semi-infinite prism, viewed from above' );
+            end
+
+            % Infinite.
+            myBox.vz = [ -Inf Inf ];
+            Q = myBox.computeQfield(surveygrid.p);
+            for p = 1 : surveygrid.Np
+                fh(4,p) = figure;
+                imagesc(Q(:,:,p)); clim( crng );
+                title( 'Infinitely tall prism' );
+            end
+
+            % Semi-infinite, viewed from below.
+            myBox.vz = [ 1 Inf ];
+            Q = myBox.computeQfield(surveygrid.p);
+            for p = 1 : surveygrid.Np
+                fh(5,p) = figure;
+                imagesc(Q(:,:,p)); clim( crng );
+                title( 'Semi-infinite prism, viewed from below' );
+            end
+
+            % Finite tall prism, viewed from below.
+            myBox.vz = [ 1 L ];
+            Q = myBox.computeQfield(surveygrid.p);
+            for p = 1 : surveygrid.Np
+                fh(6,p) = figure;
+                imagesc(Q(:,:,p)); clim( crng );
+                title( 'Finite tall prism, viewed from below' );
+            end
+
+            BaseTools.tileFigures( fh );
+            colormap( MagSource.magcolors );
 
         end
 
