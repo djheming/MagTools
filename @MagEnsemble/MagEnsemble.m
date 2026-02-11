@@ -98,17 +98,11 @@ classdef MagEnsemble < MagSource
 
         % Display functions.
         function ah = drawEnsemble( thisMagEnsemble, varargin )
-            if ~isempty(varargin) && ishandle(varargin{1})
-                ah = varargin{1};
-                opt_args = varargin(2:end);
-            else
-                fh = figure;
-                ah = axes('Parent',fh); 
-                xlabel('x');
-                ylabel('y');
-                zlabel('z');
-                opt_args = varargin;
-            end
+            [ args, opt_args ] = BaseTools.argarray2struct( varargin );
+            ah = BaseTools.extractAxesHandle( args );
+            xlabel('x');
+            ylabel('y');
+            zlabel('z');
             hold(ah,'on');
             for k = 1 : thisMagEnsemble.N
                 thisMagEnsemble.sources(k).drawSource( ah, opt_args{:} );
@@ -164,6 +158,9 @@ classdef MagEnsemble < MagSource
                     fh.CurrentAxes.ZLim = [ -2 2 ];
                     fh.Position(4) = 400;
                     varargout{1} = fh;
+
+                    % Show composite Q.
+                    BaseTools.tileFigures( myEnsemble.showQfieldContours( 'all' ) );
                                         
                 case 'Bongiolo4'
 
@@ -183,7 +180,7 @@ classdef MagEnsemble < MagSource
                     topdepth = 1;
                     yinc = 0;
                     myBox = BongioloMagBox( chi, Mr, wx, wy, wz, x0, y0, topdepth, yinc );
-                    myBox.Ba = B_ambient;
+                    myBox.Bref = B_ambient;
                     survey_plane = SurveyField( linspace(0,64), linspace(0,64), 0 );
                     myBox.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
@@ -206,7 +203,7 @@ classdef MagEnsemble < MagSource
                         BongioloMagBox( 0.027, zeros(3,1), 1500, 100, 250, 4500, 1000, 50, -215 ) ...
                         BongioloMagBox( 0.027, zeros(3,1), 1000, 200, 500, 4500, 1000, 150, 75 ) ...
                         ] );
-                    myEnsemble.Ba = B_ambient;
+                    myEnsemble.Bref = B_ambient;
                     survey_plane = SurveyField( linspace(0,6000), linspace(0,6000), 0 );
                     fh_total_anom = myEnsemble.showBfieldContours( 'a', survey_plane, 'view', [ 0 90 ] );
                     fh_B_components = BaseTools.tileFigures( myEnsemble.showBfieldContours( 'xyz', survey_plane, 'view', [ 0 90 ] ) );
@@ -225,7 +222,7 @@ end
 
 
 
-function thisBox = BongioloMagBox( chi, Mr, wx, wy, wz, x0, y0, topdepth, yinc )
+function thisBox = BongioloMagBox( user_chi, Mr, wx, wy, wz, x0, y0, topdepth, yinc )
 
 % Translate from Bongiolo+ terminology to mine.
 
@@ -244,7 +241,7 @@ R_AS = BaseTools.rpy2rot( 0, 0, yinc )';
 % dimensions, remanent magnetization, and susceptibility. The total
 % magnetization (remanent plus induced) will be calculated later when the B
 % field is requested.
-thisBox = MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], Mr, v_AS, R_AS, 'A', 'chi', chi );
+thisBox = MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], Mr, v_AS, R_AS, Mframe='A', chi=user_chi );
 
 end
 
