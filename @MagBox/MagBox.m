@@ -12,13 +12,20 @@ classdef MagBox < MagSource
     %   The box is assumed to have uniform magnetization:
     %       M (3x1 vector): remanent magnetization (A/m)
     %
-    %   Optional additional properties:
+    %   Optional additional input arguments:
+    %       v_AS: (3x1 vector) position of prism origin with respect to external analysis frame.
+    %       R_AS: (3x3 rotation matrix) representing prism orientation with respect to external analysis frame.
+    %
+    %   Additional input arguments can be supplied in name,value pairs:
+    %       Mframe: (character) indication of the frame in which M is
+    %            expressed: either the source frame 'S' or the analysis
+    %            frame 'A' (default). 
     %       chi (scalar): magnetic susceptibility (n/d); if included, the
-    %       total magnetization is computed internally as M = Mr + Mi where
-    %       Mr is the remanent magnetization specified above and Mi = Ba *
-    %       chi/mu0 is the induced magnetization (additionally requires an
-    %       ambient field, Ba, to be specified)
-    %       Ba (3x1 vector): ambient magnetic field (Teslas)
+    %            total magnetization is computed internally as M = Mr + Mi
+    %            where Mr is the remanent magnetization specified above and
+    %            Mi = Bref * chi/mu0 is the induced magnetization. This
+    %            requires an ambient field, Bref, to be specified too.
+    %       Bref (3x1 vector): reference/ambient magnetic field (Teslas)
     %
     %   Derived properties include:
     %       V (scalar): box volume (m^3)
@@ -115,11 +122,11 @@ classdef MagBox < MagSource
                     newMagBox.v_AS = varargin{5};
                     newMagBox.R_AS = varargin{6};
                     if nargin >= 7
-                        newMagBox.Mframe = varargin{7};
-                        if nargin >= 8
-                            args = BaseTools.argarray2struct( varargin(8:end) );
-                            if isfield(args,'chi')
-                                newMagBox.chi = args.chi;
+                        args = BaseTools.argarray2struct( varargin(7:end) );
+                        names = fieldnames(args);
+                        for i = 1 : length(names)
+                            if isprop(newMagBox,names{i})
+                                newMagBox.(names{i}) = args.(names{i});
                             end
                         end
                     end
@@ -159,8 +166,8 @@ classdef MagBox < MagSource
         function Mi = get.Mi( thisMagBox )
             % Return induced magnetization given ambient field and magnetic
             % susceptibility. Return zero if either of those is missing.
-            if ~isempty( thisMagBox.chi ) && ~isempty( thisMagBox.Ba )
-                Mi = thisMagBox.Ba * thisMagBox.chi / MagSource.mu_naught;
+            if ~isempty( thisMagBox.chi ) && ~isempty( thisMagBox.Bref )
+                Mi = thisMagBox.Bref * thisMagBox.chi / MagSource.mu_naught;
             else
                 Mi = zeros(3,1);
             end
@@ -346,28 +353,31 @@ classdef MagBox < MagSource
         ah = drawBox( thisMagBox, varargin )
         function fh = showM( thisMagBox, varargin )
             % TO DO: make this nicer!
-            [ args, optargs ] = BaseTools.argarray2struct(varargin, { 'Color', 'r', 'Color2', [.6 .6 .6], 'show_comps', false, 'comps', 'xyz', 'view', [] });
+            [ args, optargs ] = BaseTools.argarray2struct(varargin, { 'Color', 'r', 'Color2', [.6 .6 .6], 'show_comps', false, 'comps', 'xyz', 'view', [], 'addlight', true });
             lenM = norm(thisMagBox.M);
             if isfield( args, 'M_length' ) && ~isempty( args.M_length )
                 lenM = lenM/args.M_length;
             end
-            Mdisp_x = thisMagBox.x0+[ 0 thisMagBox.M(1)/lenM ];
-            Mdisp_y = thisMagBox.y0+[ 0 thisMagBox.M(2)/lenM ];
-            Mdisp_z = thisMagBox.z0+[ 0 thisMagBox.M(3)/lenM ];
+            M_tail_head = [ zeros(3,1) thisMagBox.MA/lenM ];
             if isfield( args, 'show_comps' ) && args.show_comps
                 headlength = 1/10;
                 fi = gobjects(size(args.comps));
                 for i = 1 : numel(args.comps)
                     [ ai, fi(i) ] = BaseTools.verify_axes_handle;
-                    BaseTools.drawArrow( ai, Mdisp_x*(strcmp(args.comps(i),'x')), Mdisp_y*(strcmp(args.comps(i),'y')), Mdisp_z*(strcmp(args.comps(i),'z')), 'LineWidth', 2.0, 'Color', args.Color, 'headlength', headlength );
-                    BaseTools.drawArrow( ai, Mdisp_x, Mdisp_y, Mdisp_z, 'LineWidth', 2.0, 'Color', args.Color2, 'headlength', headlength, 'view', args.view );
+                    BaseTools.drawArrow( ai, M_tail_head(1,:)*(strcmp(args.comps(i),'x')), M_tail_head(2,:)*(strcmp(args.comps(i),'y')), M_tail_head(3,:)*(strcmp(args.comps(i),'z')), 'LineWidth', 2.0, 'Color', args.Color, 'headlength', headlength );
+                    BaseTools.drawArrow( ai, M_tail_head(1,:), M_tail_head(2,:), M_tail_head(3,:), 'LineWidth', 2.0, 'Color', args.Color2, 'headlength', headlength, 'view', args.view );
+                    if args.addlight
+                        camlight; % Give it some 3D lighting.
+                    end
                 end
                 fh = BaseTools.tileFigures( fi' );
             else
                 [ ah, fh ] = BaseTools.extractAxesHandle( args );
-                BaseTools.drawArrow( ah, Mdisp_x, Mdisp_y, Mdisp_z, 'LineWidth', 2.0, optargs{:} );
+                BaseTools.drawArrow( ah, M_tail_head(1,:), M_tail_head(2,:), M_tail_head(3,:), 'Color', args.Color, 'LineWidth', 2.0, optargs{:} );
                 if isfield( args, 'view' ) && ~isempty( args.view )
                     view( ah, args.view );
+                end
+                if args.addlight
                     camlight; % Give it some 3D lighting.
                 end
             end
@@ -588,6 +598,9 @@ classdef MagBox < MagSource
                     % Set output arguments.
                     varargout{1} = { fh49, fh410, fh3Dv, fh3Dh };
 
+                    % Just out of interest, let's also look at Q.
+                    BaseTools.tileFigures( vertBox.showQfieldContours( 'all', survey_volume, 'z_down', true, 'view', [ -130 20 ] ), 3, 3 );
+                    
                 case 'HemingwayTikoo2018'
 
                     % Replicate figures from Hemingway & Tikoo (2018).
@@ -615,7 +628,7 @@ classdef MagBox < MagSource
                     R_AS = BaseTools.rpy2rot( roll, pitch, yaw );
                     v_AS = [ 2 -.5 0 ]';
                     M = [ 0 1 0 ]'; % This is in the source coordinate frame.
-                    myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS, 'S' );
+                    myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS, Mframe='S' );
                     myBox.drawBox( 'axes', true );
 
                     % Show field structure around this prism.
