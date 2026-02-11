@@ -141,14 +141,9 @@ classdef MagDipoles < MagSource
 
         % Display functions.
         function ah = drawDipoles( theseDipoles, varargin )
-            if ~isempty(varargin) && ishandle(varargin{1})
-                ah = varargin{1};
-                opt_args = varargin(2:end);
-            else
-                opt_args = varargin;
-            end
             def_args = { 'overlay', false, 'axislabels', 'xyz', 'clr', [ .2 .2 .2 ] };
-            args = BaseTools.argarray2struct( [ def_args opt_args{:} ] );
+            args = BaseTools.argarray2struct( varargin, def_args );
+            ah = BaseTools.extractAxesHandle(args);
             if ~exist( 'ah', 'var' ) || ~ishandle( ah )
                 fh = figure;
                 ah = axes('Parent',fh);
@@ -174,7 +169,6 @@ classdef MagDipoles < MagSource
 
         function varargout = unit_test( type )
 
-            close all;
             if ~exist( 'type', 'var' )
                 type = 'Blakely_Figs_4_9_4_10';
             end
@@ -191,10 +185,10 @@ classdef MagDipoles < MagSource
                     % Define a 2D plane for evaluation and show B field on that plane.
                     % This corresponds to Blakely Figure 4.9.
                     survey_plane = SurveyField( linspace(-2,2), linspace(-2,2), -1 );
-                    fa = vertDipole.showBfieldContours( 'z', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(a)' );
-                    fc = vertDipole.showBfieldContours( 'x', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(c)' );
-                    fb = horizDipole.showBfieldContours( 'x', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(b)' );
-                    fd = horizDipole.showBfieldContours( 'z', survey_plane, 'view', [ 90 -90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(d)' );
+                    fa = vertDipole.showBfieldContours( 'z', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(a)' );
+                    fc = vertDipole.showBfieldContours( 'x', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(c)' );
+                    fb = horizDipole.showBfieldContours( 'x', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(b)' );
+                    fd = horizDipole.showBfieldContours( 'z', survey_plane, 'z_down', true, 'view', [ -90 90 ], 'clim', [ -100 100 ], 'cbar', false, 'axlbl', '(d)' );
                     fh49 = BaseTools.tileFigures( { fa fb fc fd }, 2, 2 );
                     
                     % Define a 1D transect and show B field along it.
@@ -207,8 +201,8 @@ classdef MagDipoles < MagSource
                     
                     % Define a 3D region and show B field in that region.
                     survey_volume = SurveyField( linspace(-3,3), linspace(-3,3), linspace(-3,3) );
-                    vfh = vertDipole.showBfieldContours( 'xyz', survey_volume, 'z_down', true, 'view', [ -130 -20 ] );
-                    hfh = horizDipole.showBfieldContours( 'xyz', survey_volume, 'z_down', true, 'view', [ -130 -20 ] );
+                    vfh = vertDipole.showBfieldContours( 'xyz', survey_volume, 'z_down', true, 'view', [ -130 20 ] );
+                    hfh = horizDipole.showBfieldContours( 'xyz', survey_volume, 'z_down', true, 'view', [ -130 20 ] );
 
                     % For context, show the 1D and 2D surveys on top of the
                     % 3D volume plots.
@@ -231,7 +225,7 @@ classdef MagDipoles < MagSource
                     % dipole corresponds to a volume of 1x1x1 length units.
                     vertDipole.showQfieldContours( 'all', survey_transect );
                     BaseTools.tileFigures( vertDipole.showQfieldContours( 'all', survey_plane ), 3, 3 );
-                    BaseTools.tileFigures( vertDipole.showQfieldContours( 'all', survey_volume, 'z_down', true, 'view', [ -130 -20 ] ), 3, 3 );
+                    BaseTools.tileFigures( vertDipole.showQfieldContours( 'all', survey_volume, 'z_down', true, 'view', [ -130 20 ] ), 3, 3 );
                     
                 case 'multiple_dipoles'
 
