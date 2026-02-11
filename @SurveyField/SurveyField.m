@@ -25,7 +25,17 @@ classdef SurveyField
     %   University of Texas at Austin
     %
     
-    properties
+    properties (Access=private)
+        int_xv % range of x values for a meshgrid
+        int_yv % range of y values for a meshgrid
+        int_zv % range of z values for a meshgrid
+        int_X % x coordinates in a meshgrid
+        int_Y % y coordinates in a meshgrid
+        int_Z % z coordinates in a meshgrid
+        int_p % 3xN array of N 3x1 evaluation point vectors
+    end
+
+    properties (Dependent)
         xv % range of x values for a meshgrid
         yv % range of y values for a meshgrid
         zv % range of z values for a meshgrid
@@ -48,11 +58,11 @@ classdef SurveyField
         function survey = SurveyField( varargin )
             if nargin == 3
                 % Here, the user has supplied the meshgrid coordinates.
-                survey.xv = varargin{1};
-                survey.yv = varargin{2};
-                survey.zv = varargin{3};
-                [ survey.X, survey.Y, survey.Z ] = meshgrid( survey.xv, survey.yv, survey.zv );
-                survey.p = [ survey.X(:)'; survey.Y(:)'; survey.Z(:)' ];
+                survey.int_xv = varargin{1};
+                survey.int_yv = varargin{2};
+                survey.int_zv = varargin{3};
+                [ survey.int_X, survey.int_Y, survey.int_Z ] = meshgrid( survey.xv, survey.yv, survey.zv );
+                survey.int_p = [ survey.X(:)'; survey.Y(:)'; survey.Z(:)' ];
             elseif nargin == 1
                 if isa( varargin{1}, 'MagSource' )
                     % Here, we have a MagSource object. Define a survey
@@ -65,22 +75,22 @@ classdef SurveyField
                     ws = [ wx wy wz ];
                     padding = 2*max( [ ws(~isinf(ws)) 1 ] );
                     if ~isinf(wx)
-                        survey.xv = linspace( src.xrng(1)-padding, src.xrng(2)+padding );
+                        survey.int_xv = linspace( src.xrng(1)-padding, src.xrng(2)+padding );
                     else
-                        survey.xv = 0;
+                        survey.int_xv = 0;
                     end
                     if ~isinf(wy)
-                        survey.yv = linspace( src.yrng(1)-padding, src.yrng(2)+padding );
+                        survey.int_yv = linspace( src.yrng(1)-padding, src.yrng(2)+padding );
                     else
-                        survey.yv = 0;
+                        survey.int_yv = 0;
                     end
                     if ~isinf(wz)
-                        survey.zv = linspace( src.zrng(1)-padding, src.zrng(2)+padding );
+                        survey.int_zv = linspace( src.zrng(1)-padding, src.zrng(2)+padding );
                     else
-                        survey.zv = 0;
+                        survey.int_zv = 0;
                     end
-                    [ survey.X, survey.Y, survey.Z ] = meshgrid( survey.xv, survey.yv, survey.zv );
-                    survey.p = [ survey.X(:)'; survey.Y(:)'; survey.Z(:)' ];
+                    [ survey.int_X, survey.int_Y, survey.int_Z ] = meshgrid( survey.xv, survey.yv, survey.zv );
+                    survey.int_p = [ survey.X(:)'; survey.Y(:)'; survey.Z(:)' ];
                 else
                     % Here, the user has directly supplied an array of points.
                     user_p = varargin{1};
@@ -94,7 +104,60 @@ classdef SurveyField
             end
         end
 
+        % Setter functions.
+        function thisSurvey = set.xv( thisSurvey, new_xv )
+            % Updating xv means updating all downstream properties too.
+            thisSurvey.int_xv = new_xv;
+            [ thisSurvey.int_X, thisSurvey.int_Y, thisSurvey.int_Z ] = meshgrid( thisSurvey.xv, thisSurvey.yv, thisSurvey.zv );
+            thisSurvey.int_p = [ thisSurvey.X(:)'; thisSurvey.Y(:)'; thisSurvey.Z(:)' ];
+        end
+        function thisSurvey = set.yv( thisSurvey, new_yv )
+            % Updating yv means updating all downstream properties too.
+            thisSurvey.int_yv = new_yv;
+            [ thisSurvey.int_X, thisSurvey.int_Y, thisSurvey.int_Z ] = meshgrid( thisSurvey.xv, thisSurvey.yv, thisSurvey.zv );
+            thisSurvey.int_p = [ thisSurvey.X(:)'; thisSurvey.Y(:)'; thisSurvey.Z(:)' ];
+        end
+        function thisSurvey = set.zv( thisSurvey, new_zv )
+            % Updating zv means updating all downstream properties too.
+            thisSurvey.int_zv = new_zv;
+            [ thisSurvey.int_X, thisSurvey.int_Y, thisSurvey.int_Z ] = meshgrid( thisSurvey.xv, thisSurvey.yv, thisSurvey.zv );
+            thisSurvey.int_p = [ thisSurvey.X(:)'; thisSurvey.Y(:)'; thisSurvey.Z(:)' ];
+        end
+        function thisSurvey = set.p( thisSurvey, new_p )
+            thisSurvey.int_p = new_p;
+            % If the user supplies p directly, then the xv, yv, zv, and
+            % meshgrids are not relevant and should be blanked out to avoid
+            % confusion.
+            thisSurvey.int_xv = [];
+            thisSurvey.int_yv = [];
+            thisSurvey.int_zv = [];
+            thisSurvey.int_X = [];
+            thisSurvey.int_Y = [];
+            thisSurvey.int_Z = [];
+        end
+
         % Getter functions.
+        function xv = get.xv( thisSurvey )
+            xv = thisSurvey.int_xv;
+        end
+        function yv = get.yv( thisSurvey )
+            yv = thisSurvey.int_yv;
+        end
+        function zv = get.zv( thisSurvey )
+            zv = thisSurvey.int_zv;
+        end
+        function X = get.X( thisSurvey )
+            X = thisSurvey.int_X;
+        end
+        function Y = get.Y( thisSurvey )
+            Y = thisSurvey.int_Y;
+        end
+        function Z = get.Z( thisSurvey )
+            Z = thisSurvey.int_Z;
+        end
+        function p = get.p( thisSurvey )
+            p = thisSurvey.int_p;
+        end
         function Np = get.Np( thisSurvey )
             Np = size( thisSurvey.p, 2 );
         end
