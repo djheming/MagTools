@@ -310,7 +310,8 @@ if isfield( args, 'p' )
 
             % Compute Qii and Qij along with alphas and f ratios.
             [ Qxx, alphas, ~ ] = MagBox.computeQii( [ rx1; rx2 ], [ ry1; ry2 ], [ rz1; rz2 ] );
-            [ Qxy, f_ab, ~, ~, Rsq ] = MagBox.computeQij( [ rx1; rx2 ], [ ry1; ry2 ], [ rz1; rz2 ] );
+            [ Qxy, f_ab, rho_ab ] = MagBox.computeQij( [ rx1; rx2 ], [ ry1; ry2 ], [ rz1; rz2 ] );
+            Rsq = rho_ab.^2;
 
             % Add text to show the relevant alpha and length ratio values.
             % The way we do this depends on whether or not the prism is
