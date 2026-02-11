@@ -40,8 +40,8 @@ if num_surveys > 1
     return;
 end
 
-% Compute Q fields (merging the contributions from each dipole).
-Q = thisSource.computeQfield(survey.p);
+% Compute Q fields (merging the contributions from each source).
+Q = thisSource.computeQfield(survey.p,Qframe='A');
 
 % Make shorthand for element letters.
 eltxt = 'xyz';
