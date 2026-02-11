@@ -18,7 +18,7 @@ classdef MagSource < matlab.mixin.Heterogeneous
     
     properties (Access=public)
 
-        Ba = zeros(3,1) % (3x1) reference magnetic field (e.g., ambient field), for computing magnetic anomaly
+        Bref = zeros(3,1) % (3x1) reference magnetic field (e.g., ambient field), for computing magnetic anomaly
 
     end
 
@@ -40,14 +40,14 @@ classdef MagSource < matlab.mixin.Heterogeneous
         end
 
         % Setter methods.
-        function thisSource = set.Ba( thisSource, newBa )
-            thisSource.Ba = newBa;
+        function thisSource = set.Bref( thisSource, newBref )
+            thisSource.Bref = newBref;
             % If the user changes the ambient field for an ensemble, this
             % needs to be propagated down to the individual members of that
             % group in case any of them have induced magnetization.
             if isprop( thisSource, 'sources' )
                 for k = 1 : thisSource.N
-                    thisSource.sources(k).Ba = newBa;
+                    thisSource.sources(k).Bref = newBref;
                 end
             end
         end
@@ -64,7 +64,7 @@ classdef MagSource < matlab.mixin.Heterogeneous
                 case { 't' 'total' }
                     Bcomp = sqrt( sum( B.^2, 1 ) );
                 case { 'a' 'anomaly' }
-                    Bcomp = sqrt(sum((B+thisSource.Ba).^2,1)) - sqrt(sum(thisSource.Ba.^2,1));
+                    Bcomp = sqrt(sum((B+thisSource.Bref).^2,1)) - sqrt(sum(thisSource.Bref.^2,1));
                 otherwise
                     error( 'Unrecognized component type (%s)', component );
             end
