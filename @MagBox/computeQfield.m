@@ -1,20 +1,25 @@
 function Q = computeQfield( thisMagBox, p, varargin )
 
 % Q = computeQfield( thisMagBox, p ) compute the Q matrix 
-% evaluated at an array of positions (p). For each position, Q is a 3x3
-% matrix that depends on the geometry of the magnetized box (thisMagBox) and
-% the position, p. 
+% evaluated at an array of positions (p). 
+% 
+% For each position, Q is a 3x3 matrix that depends on the geometry of the
+% magnetized box (thisMagBox) and the position, p. 
 % 
 % The input array p is a 3xN matrix whose rows represent the x, y, z,
 % components, and whose columns represent N different positions. 
+%
 % The output is a 3x3xN matrix. The matrices can be used to relate the
 % magnetization vector (M) to the resulting B-field (see computeBfield
 % for MagBox). 
 %
-% IMPORTANT: the positions defined by p must be expressed
-% in the magnetized prism's own preferred source coordinate system.
-% Transformations between an external analysis coordinate system and
-% this source's own coordinate system must be handled externally.
+% IMPORTANT: by default, the positions defined by p must be expressed
+% in the magnetized prism's own "source" coordinate system.
+% Transformations between an external "analysis" coordinate system and
+% this "source" coordinate system are generally handled externally.
+% However, if the user specifies Qframe='A', the transformation is handled
+% internally. The output is then Q^{(A)}. To get B^{(A)}, this must be
+% multipled with M^{(A)}. 
 % 
 %
 %   Disclaimer: This code is provided as-is, has been tested only very
@@ -33,6 +38,18 @@ function Q = computeQfield( thisMagBox, p, varargin )
 %
 
 
+% Parse input arguments.
+args = BaseTools.argarray2struct( varargin, { 'Qframe', 'S' } ); 
+if strcmp(args.Qframe,'A')
+    % By default, we work in the "source" coordinate frame. But in this case,
+    % the user wants us to take inputs and return outputs in the "analysis"
+    % coordinate frame instead. First, we transform the points into the
+    % "source" coordinate frame. 
+    p = thisMagBox.R_SA * ( p - thisMagBox.v_AS );
+    % The rest of this function then proceeds with a focus on the source
+    % coordinate system until the very end, when the result is rotated back
+    % into the "analysis" frame orientation.
+end
 
 % Make sure the input position grid looks right.
 if size( p, 1 ) ~= 3
@@ -71,3 +88,8 @@ insidebox = p(1,:)>=min(thisMagBox.vx) & p(1,:)<=max(thisMagBox.vx) & ...
     p(3,:)>=min(thisMagBox.vz) & p(3,:)<=max(thisMagBox.vz);
 Q(:,:,insidebox) = NaN;
 
+% If the user wants the output in the "analysis" frame, we have to rotate
+% the resulting Q.
+if strcmp(args.Qframe,'A')
+    Q = pagemtimes( thisMagBox.R_AS, pagemtimes( Q, thisMagBox.R_SA ) );
+end
