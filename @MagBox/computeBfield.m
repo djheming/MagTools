@@ -4,9 +4,14 @@ function B = computeBfield( thisMagBox, p, varargin )
 % evaluated at an array of positions (p), arising from the supplied
 % magnetized rectangular prism (thisMagBox). p is a 3xN matrix whose rows
 % represent the x, y, z, components, and whose columns represent N
-% different positions. The output is likewise a 3xN matrix whose rows
-% represent the Bx, By, Bz components and whose columns represent the N
-% different vector field measurements.
+% different positions. These points are always expressed in the "analysis"
+% coordinate system, which may or may not differ from the "source"
+% coordinate system. If they differ, some internal logic is required to
+% carry out the necessary transformations.
+
+% The output is a 3xN matrix whose rows represent the Bx, By, Bz components
+% and whose columns represent the N different vector field measurements.
+% Again, this is always in the "analysis" coordinate system.
 %
 %
 %   Disclaimer: This code is provided as-is, has been tested only very
@@ -50,7 +55,7 @@ end
 
 % Combine this with the magnetization vector to get the B field. The way we
 % do this depends on whether the magnetization vector is expressed in the
-% analysis coordinate system or the source coordinate system.
+% "analysis" coordinate system or the "source" coordinate system.
 switch thisMagBox.Mframe
     case 'S'
         Q_A = pagemtimes( thisMagBox.R_AS, Q_S );
