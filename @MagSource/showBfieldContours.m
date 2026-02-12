@@ -17,8 +17,7 @@ function fh = showBfieldContours( thisSource, component, varargin )
 
 
 % Read input arguments.
-args = BaseTools.argarray2struct( varargin, { 'Q', [], 'view', [], 'z_down', false, 'figsize', 520, 'title', false, 'overlay_vectors', true, 'show_source', true } );
-optargs = BaseTools.struct2argarray(args);
+[ args, optargs ] = BaseTools.argarray2struct( varargin, { 'Q', [], 'view', [], 'z_down', false, 'figsize', 520, 'title', false, 'overlay_vectors', true, 'show_source', true } );
 
 % Check leading positional arguments for a SurveyField. If it was not supplied, make it here.
 for k = 1 : length(args.posArgs)
