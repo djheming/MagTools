@@ -41,7 +41,7 @@ if num_surveys > 1
 end
 
 % Compute Q fields (merging the contributions from each source).
-Q = thisSource.computeQfield(survey.p,Qframe='A');
+Q = thisSource.computeQfield(survey.p);
 
 % Make shorthand for element letters.
 eltxt = 'xyz';
