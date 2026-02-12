@@ -1,11 +1,11 @@
 % Reproduce figures for the paper accompanying this software (Hemingway,
 % RASTI, 2026).
 %
-% PRO-TIP: This script is divided into sections. Instead of running
-% the whole file at once, the recommended approach is to click into a
+% SCRIPT USAGE: This script is divided into sections. Instead of running
+% the whole script at once, the recommended approach is to click into a
 % section and press Cmd+Enter (Mac) or Ctrl+Enter (PC) to run one section
-% at a time. Each section corresponds to one figure in the paper (or two if
-% they're closely related).
+% at a time. Each section corresponds to one figure in the paper (or a few
+% if they're closely related).
 %
 % If you want figures to be saved, specify a valid destination folder below
 % (modify the line that sets figs_folder = []).
@@ -22,9 +22,12 @@
 %   2024-06-15
 %
 
-% Step 0: Before doing anything, make sure MagTools and BaseTools (a
-% library for lower level functions) are on your Matlab path. You can do
-% this by running the setup.m script. 
+
+%% Step 0: Initialize.
+
+% Before doing anything, make sure MagTools and BaseTools (a library for
+% lower level functions) are on your Matlab path. You can do this by
+% running the setup.m script.  
 setup;
 
 % Clean up previous figures, if desired.
@@ -32,7 +35,7 @@ setup;
 
 % If you want the figures saved, specify a destination folder here. 
 % If this is empty, figures are still displayed but not saved.
-figs_folder = '../UpdatedFigures';
+figs_folder = [];
 
 
 %% Figures 1 and 6: 3D Box Geometry
@@ -63,8 +66,8 @@ end
 % Make a box and define a couple of different evaluation points.
 myBox = MagBox( [ 1.5 3.5 ], [ 0.5 1.5 ], [ -1 0 ], [ 1 0 0 ]' );
 p = [
-    2.45 -1 0.5
-    4.2 -1 -0.4
+    2.45 -1 0.5 % Chosen such that Qii<0 and Qij is nearly zero
+    4.2 -1 -0.4 % Chosen such that Qii is nearly zero and Qij is non-zero
     ]';
 num_points = size(p,2);
 
@@ -81,8 +84,8 @@ end
 
 
 %% Figure 2: 3D Prism Coordinate Transformation.
-% Illustrates the relationship between the source coordinate system (S) and
-% a more general analysis coordinate system (A). 
+% Illustrates the relationship between the source-aligned coordinate system (S) 
+% and a more general analysis coordinate system (A). 
 
 % Define a prism that is a tad askew.
 roll = 10;
@@ -91,7 +94,7 @@ yaw = 30;
 R_AS = BaseTools.rpy2rot( roll, pitch, yaw );
 v_AS = [ 2 -.5 0 ]';
 M = [ 0 1 0 ]'; % This is in the source coordinate frame.
-myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS );
+myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS, Mframe='S' );
 
 % Show box with evaluation point.
 p = [ 2.5 1.5 0 ]';
@@ -278,9 +281,10 @@ keyBoxes = [
     MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], [ -1 -1 -1 ]' );
     MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], [ 3 0 0 ]' );
     ];
-keyBoxes.previewBmovie( 'fixed_moment', 500, 'b', 40 );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
     keyBoxes.makeBmovie( [ figs_folder '/Video1_3DB_direction_cycle.mp4' ], 'fixed_moment', 500, 'b', 40, 'duration', 4 );
+else
+    keyBoxes.previewBmovie( 'fixed_moment', 500, 'b', 40 );
 end
 
 
@@ -295,9 +299,10 @@ keyBoxes = [
     MagBox( [ -1 1 ], [ -1 1 ], [ -10 0.5 ], M );
     MagBox( [ -1 1 ], [ -1 1 ], [ -0.5 0.5 ], M );
     ];
-keyBoxes.previewBmovie( 'fixed_moment', 200, 'b', 20 );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
     keyBoxes.makeBmovie( [ figs_folder '/Video2_3DB_shape_cycle.mp4' ], 'fixed_moment', 200, 'b', 20, 'duration', 3 );
+else
+    keyBoxes.previewBmovie( 'fixed_moment', 200, 'b', 20 );
 end
 
 
@@ -312,9 +317,10 @@ keyBoxes = [
     MagBox( [ -30 30 ], [ -1 1 ], [ -0.5 0.5 ], M );
     MagBox( [ -1 1 ], [ -1 1 ], [ -0.5 0.5 ], M );
     ];
-keyBoxes.previewBmovie( 'fixed_moment', 600, 'b', 50 );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
     keyBoxes.makeBmovie( [ figs_folder '/Video3_3DB_wire_plate_cycle.mp4' ], 'fixed_moment', 600, 'b', 50, 'duration', 3 );
+else
+    keyBoxes.previewBmovie( 'fixed_moment', 600, 'b', 50 );
 end
 
 
@@ -339,8 +345,10 @@ keyBoxes = [
     MagBox( [ -10 10 ], [ -2 2 ], [ -.5 .5 ], M );
     MagBox( [ -10 0 ], [ -2 2 ], [ -.5 .5 ], M );
     ];
-keyBoxes.previewBmovie( 'b', 50 );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
     keyBoxes.makeBmovie( [ figs_folder '/Video4_semi-infinite-cycle-both-sides.mp4' ], 'b', 50, 'duration', 3 );
+else
+    keyBoxes.previewBmovie( 'b', 50 );
 end
+
 
