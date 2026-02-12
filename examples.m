@@ -1,4 +1,4 @@
-% This script is intended to serve as a basic example of how to use
+% This script is intended to serve as a set of basic examples of how to use
 % MagTools.
 %
 % MagTools is a set of tools for modeling magnetized source bodies in
@@ -10,8 +10,8 @@
 % showBfieldContours or showBfieldVectors to visualize the resulting
 % magnetic field. See below for details.
 %
-% PRO-TIP: This script is divided into sections. Instead of running
-% the whole file at once, the recommended approach is to click into a
+% SCRIPT USAGE: This script is divided into sections. Instead of running
+% the whole script at once, the recommended approach is to click into a
 % section and press Cmd+Enter (Mac) or Ctrl+Enter (PC) to run one example
 % at a time.
 %
@@ -28,10 +28,11 @@
 %
 
 
+%% Step 0: Initialize.
 
-% Step 0: Before doing anything, make sure MagTools and BaseTools (a
-% library for lower level functions) are on your Matlab path. You can do
-% this by running the setup.m script. 
+% Before doing anything, make sure MagTools and BaseTools (a library for
+% lower level functions) are on your Matlab path. You can do this by
+% running the setup.m script.  
 setup;
 
 % Clean up previous figures, if desired.
@@ -67,7 +68,7 @@ myDipole.showBfieldContours('x');
 % the z=0 plane. In its most typical usage, the SurveyField constructor
 % accepts three arguments, defining the x, y, and z grid coordinates,
 % respectively. 
-xvals = linspace(-10,10); % gives a finely spaced set of points along the x-axis
+xvals = linspace(-10,10,101); % gives a finely spaced set of points along the x-axis
 yvals = 0;
 zvals = 0;
 mySurveyTransect = SurveyField( xvals, yvals, zvals );
@@ -80,7 +81,7 @@ myDipole.showBfieldContours('x',mySurveyTransect);
 myDipole.showBfieldContours('xyz',mySurveyTransect); 
 
 % Example 1.5: Let's do the same again but now with a 2D plane.
-mySurveyPlane = SurveyField( linspace(-10,10), linspace(-10,10), 0 );
+mySurveyPlane = SurveyField( linspace(-10,10,101), linspace(-10,10,101), 0 );
 myDipole.showBfieldContours('x',mySurveyPlane);
 % Notice that you can freely rotate the figure to see the field from
 % different angles. Notice also that, in addition to the high resolution
@@ -126,6 +127,49 @@ BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', mySurveyPlane ) );
 % Again, you're going to want a coarser grid for this.
 myBox.showBfieldVectors( coarseSurveyPlane );
 
+
+
+%% Example 3: Multiple prisms.
+% This section introduces the MagEnsemble class.
+
+% Example 3.0: Assemble a collection of prisms with different positions and
+% orientations. Here, we'll make two identical boxes but the second will be
+% translated and rotated with respect to the first. We will always be
+% viewing the resulting field structure in terms of a common "analysis"
+% coordinate frame. 
+
+% Box 1: Standard definition, expressed in the "analysis" coordinate frame.
+M = [ 3 0 0 ]'; 
+xrng = [ -2 4 ];
+yrng = [ 1 3 ];
+zrng = [ -2 -5 ]; % The order is not important.
+box1 = MagBox( xrng, yrng, zrng, M );
+
+% Box 2: Use a vector and rotation matrix to define how this prism's "source"
+% coordinate frame relates to the "analysis" coordinate frame.
+roll = 5; pitch = -10; yaw = 40;
+R_AS = BaseTools.rpy2rot( roll, pitch, yaw ); % Rotation built from roll, pitch, yaw angles (degrees).
+v_AS = [ 10; -10; 0 ]; % Vector offset for origin of second prism.
+box2 = MagBox( xrng, yrng, zrng, M, v_AS, R_AS ); % Here, M is still expressed in terms of the "analysis" frame.
+
+% Combine the two boxes into an ensemble.
+myEnsemble = MagEnsemble( [ box1; box2 ] ) % Dropping the semicolon to reveal the contents of this object.
+
+% Example 3.1: Examine the resulting field on a wide survey plane.
+wideSurvey = SurveyField( linspace(-20,20,101), linspace(-20,20,101), 0 );
+BaseTools.tileFigures( myEnsemble.showBfieldContours( 'xyz', wideSurvey ) );
+
+% Example 3.2: Here we'll define a third box where the magnetization is
+% defined not in terms of the "analysis" coordinate frame but rather in a
+% frame that maintains its orientation with the prism (i.e., in the
+% "source" frame). 
+box3 = MagBox( xrng, yrng, zrng, M, v_AS, R_AS, Mframe='S' );
+myEnsemble = MagEnsemble( [ box1; box3 ] )
+BaseTools.tileFigures( myEnsemble.showBfieldContours( 'xyz', wideSurvey ) );
+
+% Example 3.3: Let's thicken the survey into a volume.
+wideSurvey.zv = 0:.1:5;
+BaseTools.tileFigures( myEnsemble.showBfieldContours( 'xyz', wideSurvey ) );
 
 
 
