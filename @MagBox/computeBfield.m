@@ -4,10 +4,12 @@ function B = computeBfield( thisMagBox, p, varargin )
 % evaluated at an array of positions (p), arising from the supplied
 % magnetized rectangular prism (thisMagBox). p is a 3xN matrix whose rows
 % represent the x, y, z, components, and whose columns represent N
-% different positions. These points are always expressed in the "analysis"
-% coordinate system, which may or may not differ from the "source"
-% coordinate system. If they differ, some internal logic is required to
-% carry out the necessary transformations.
+% different positions. 
+% 
+% These points are always expressed in the "analysis" coordinate system,
+% which may or may not differ from the "source" coordinate system. If they
+% differ, some internal logic is required to carry out the necessary
+% transformations within the computeQfield function. 
 
 % The output is a 3xN matrix whose rows represent the Bx, By, Bz components
 % and whose columns represent the N different vector field measurements.
@@ -39,32 +41,18 @@ if size( p, 1 ) ~= 3
 end
 Np = size( p, 2 );
 
-% First, we have to make sure to express the evaluation points (p) in the
-% magnetized prism's own preferred "source coordinate system" (S).
-pS = thisMagBox.R_SA * ( p - thisMagBox.v_AS );
-
 % Obtain the Q matrix for each of the observation points (p). The result
 % here will be a 3x3xN matrix expressing the Q transformation in the
-% source coordinate system (S). We can skip this if the user has supplied a
+% analysis coordinate system (A). We can skip this if the user has supplied a
 % Q with the right dimensions.
 if isfield( args, 'Q' ) && ~isempty( args.Q ) && all( size(args.Q)==[ 3 3 Np ] )
-    Q_S = args.Q;
+    Q = args.Q;
 else
-    Q_S = thisMagBox.computeQfield( pS );
+    Q = thisMagBox.computeQfield( p );
 end
 
-% Combine this with the magnetization vector to get the B field. The way we
-% do this depends on whether the magnetization vector is expressed in the
-% "analysis" coordinate system or the "source" coordinate system.
-switch thisMagBox.Mframe
-    case 'S'
-        Q_A = pagemtimes( thisMagBox.R_AS, Q_S );
-    case 'A'
-        Q_A = pagemtimes( thisMagBox.R_AS, pagemtimes( Q_S, thisMagBox.R_SA ) );
-    otherwise
-        error( 'Unrecognized coordinate frame for magnetization vector' );
-end
-B = MagSource.mu_naught_over_4pi * pagemtimes( Q_A, thisMagBox.M );
+% Combine this with the magnetization vector to get the B field. 
+B = MagSource.mu_naught_over_4pi * pagemtimes( Q, thisMagBox.M );
 
 % Squeeze out the singleton dimension to leave only a 3xN matrix.
 B = squeeze(B);

@@ -45,6 +45,7 @@ classdef MagBox < MagSource
     
     properties (Access=private)
 
+        % Box dimensions, expressed in the "source" coordinate frame.
         int_vx % (1x2 array) range of x positions spanned by the box in its own frame.
         int_vy % (1x2 array) range of y positions spanned by the box in its own frame.
         int_vz % (1x2 array) range of z positions spanned by the box in its own frame.
@@ -53,9 +54,8 @@ classdef MagBox < MagSource
 
     properties (Access=public)
         
-        Mframe = 'A' % coordinate frame in which M is expressed (analysis coordinate system by default).
+        % Magnetization vector expressed in the "analysis" coordinate frame.
         Mr % (3x1 vector) remanent magnetization (A/m), assumed uniform throughout the box.
-        chi % (n/d scalar) magnetic susceptibility for induced magnetization.
 
         % The vx, vy, vz ranges are specified in a coordinate system
         % that may or may not be unique to this source body. If the source
@@ -74,12 +74,25 @@ classdef MagBox < MagSource
         % equivalently, pS = R_SA * ( pA - v_AS ). Recall that the inverse
         % of a rotation matrix is also its transpose, so R_SA = R_AS'.
         
+        % Invariant quantities.
+        chi % (n/d scalar) magnetic susceptibility for induced magnetization.
+
     end
     
     properties (Dependent)
 
+        % Vectors and coordinates exressed in the "analysis" coordinate frame.
         M % (3x1 vector) magnetization (A/m), assumed uniform throughout the box.
         Mi % (3x1 vector) induced magnetization (A/m), assumed uniform throughout the box.
+        vA % (3x8 array) vector positions of each of the 8 vertices in the analysis frame.
+        cenA % (3x1 vector) vector position of prism centroid in the analysis frame.
+        xrng % (1x2 array) range of x positions spanned by the box in the analysis frame.
+        yrng % (1x2 array) range of y positions spanned by the box in the analysis frame.
+        zrng % (1x2 array) range of z positions spanned by the box in the analysis frame.
+        rng % (3x2 array) summarizing the above ranges.
+        
+        % Vectors and coordinates expressed in the "source" coordinate frame.
+        M_S % (3x1 vector) magnetization (A/m) in the source frame.
         vx % (1x2 array) range of x positions spanned by the box in its own frame.
         vy % (1x2 array) range of y positions spanned by the box in its own frame.
         vz % (1x2 array) range of z positions spanned by the box in its own frame.
@@ -95,15 +108,10 @@ classdef MagBox < MagSource
         finitedims % (logical) identifies which dimensions are finite
         finitefaces % (3x2 logical) identifying which faces are finite
 
+        % Transformation between the two coordinate frames.
         R_SA % the inverse of the R_AS rotation matrix
-        MA % (3x1 vector) magnetization (A/m) in the analysis frame.
-        vA % (3x8 array) vector positions of each of the 8 vertices in the analysis frame.
-        cenA % (3x1 vector) vector position of prism centroid in the analysis frame.
-        xrng % (1x2 array) range of x positions spanned by the box in the analysis frame.
-        yrng % (1x2 array) range of y positions spanned by the box in the analysis frame.
-        zrng % (1x2 array) range of z positions spanned by the box in the analysis frame.
-        rng % (3x2 array) summarizing the above ranges.
-        
+
+        % Invariant quantities.
         mtot % total magnetic moment (Am^2)
         Vtot % total volume of the box (m^3)
         
@@ -117,12 +125,12 @@ classdef MagBox < MagSource
                 newMagBox.int_vx = sort(varargin{1});
                 newMagBox.int_vy = sort(varargin{2});
                 newMagBox.int_vz = sort(varargin{3});
-                newMagBox.Mr = varargin{4};
+                input_M = varargin{4}; % Don't set this yet (see below).
+                args = BaseTools.argarray2struct( varargin(7:end), {'Mframe','A'} );
                 if nargin >= 6
                     newMagBox.v_AS = varargin{5};
                     newMagBox.R_AS = varargin{6};
                     if nargin >= 7
-                        args = BaseTools.argarray2struct( varargin(7:end) );
                         names = fieldnames(args);
                         for i = 1 : length(names)
                             if isprop(newMagBox,names{i})
@@ -130,6 +138,15 @@ classdef MagBox < MagSource
                             end
                         end
                     end
+                end
+                % We can set the magnetization now that we know the
+                % coordinate frame the user intended.
+                if strcmp(args.Mframe,'A')
+                    newMagBox.Mr = input_M;
+                elseif strcmp(args.Mframe,'S')
+                    newMagBox.Mr = newMagBox.R_AS * input_M; % Need to rotate into the "analysis" frame.
+                else
+                    error( 'Unrecognized coordinate frame (%s)', Mframe );
                 end
             end
         end
@@ -147,16 +164,14 @@ classdef MagBox < MagSource
 
         % Allow the user to set M directly.
         function thisMagBox = set.M( thisMagBox, new_M )
-            % If the user is trying to directly set the total M, we have to
-            % assume they want a remanent magnetization only (i.e., does
-            % not depend on the ambient field).
+            % The input magnetization MUST be in the "analysis" coordinate frame.
             thisMagBox.Mr = new_M;
             thisMagBox.chi = 0; % This will make Mi = 0.
         end
 
         % Simple getter methods.
         function Mr = get.Mr( thisMagBox )
-            % Return remanent magnetization vector. Zero of not set.
+            % Return remanent magnetization vector. Zero if not set.
             if isempty( thisMagBox.Mr )
                 Mr = zeros(3,1);
             else
@@ -175,6 +190,10 @@ classdef MagBox < MagSource
         function M = get.M( thisMagBox )
             % Total magnetization vector is the remanent plus induced M.
             M = thisMagBox.Mr + thisMagBox.Mi;
+        end
+        function M_S = get.M_S( thisMagBox )
+            % Magnetization vector rotated into the source frame.
+            M_S = thisMagBox.R_SA * thisMagBox.M;
         end
         function vx = get.vx( thisMagBox )
             vx = thisMagBox.int_vx;
@@ -206,9 +225,6 @@ classdef MagBox < MagSource
             else
                 vA = thisMagBox.v_AS + thisMagBox.R_AS * thisMagBox.vS;
             end
-        end
-        function MA = get.MA( thisMagBox )
-            MA = thisMagBox.R_AS * thisMagBox.M;
         end
         function cenA = get.cenA( thisMagBox )
             cenA = thisMagBox.v_AS + thisMagBox.R_AS * thisMagBox.cenS;
@@ -635,6 +651,12 @@ classdef MagBox < MagSource
                     survey_plane = SurveyField( linspace(-8,8), linspace(-8,8), 0.5 );
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_plane ) );
                     BaseTools.tileFigures( myBox.showBfieldContours( 'xyz' ) );
+
+                    % Make another box but with the magnetization defined
+                    % in the analysis coordinate system.
+                    box2 = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS, Mframe='A' );
+                    box2.drawBox( 'axes', true );
+                    BaseTools.tileFigures( box2.showBfieldContours( 'xyz', survey_plane ) );
                     
                 case 'inspect_singularities'
 
@@ -677,12 +699,13 @@ classdef MagBox < MagSource
                     xv = myBox.xrng(1)-1:d:myBox.xrng(2)+1;
                     yv = myBox.yrng(1)-1:d:myBox.yrng(2)+1;
                     zv = myBox.zrng(1)-1:d:myBox.zrng(2)+1;
-                    myBox.showBfieldVectors( SurveyField( xv, yv, min(zv) ) );
-                    myBox.showBfieldVectors( SurveyField( xv, min(yv), zv ) );
-                    myBox.showBfieldVectors( SurveyField( min(xv), yv, zv ) );
-                    myBox.showBfieldVectors( SurveyField( xv, yv, max(zv) ) );
-                    myBox.showBfieldVectors( SurveyField( xv, max(yv), zv ) );
-                    myBox.showBfieldVectors( SurveyField( max(xv), yv, zv ) );
+                    f1 = myBox.showBfieldVectors( SurveyField( xv, yv, min(zv) ) );
+                    f2 = myBox.showBfieldVectors( SurveyField( xv, min(yv), zv ) );
+                    f3 = myBox.showBfieldVectors( SurveyField( min(xv), yv, zv ) );
+                    f4 = myBox.showBfieldVectors( SurveyField( xv, yv, max(zv) ) );
+                    f5 = myBox.showBfieldVectors( SurveyField( xv, max(yv), zv ) );
+                    f6 = myBox.showBfieldVectors( SurveyField( max(xv), yv, zv ) );
+                    BaseTools.tileFigures( [ f1 f2 f3; f4 f5 f6 ] );
 
                     %
                     % Semi-infinite (and quasi-semi-infinite) prisms.
@@ -712,8 +735,6 @@ classdef MagBox < MagSource
                     myBox = MagBox( [ -Inf Inf ], [ -Inf 200 ], [ 2 5 ], M );
                     BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
                     myBox = MagBox( [ -Inf 100 ], [ -Inf 200 ], [ 2 5 ], M );
-                    BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
-                    myBox = MagBox( [ -Inf 100 ], [ -Inf 200 ], [ -Inf 5 ], M );
                     BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
 
                 case 'staticQ'
