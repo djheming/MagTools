@@ -51,35 +51,32 @@ classdef MagDipoles < MagSource
         
         % Constructor.
         function newDipoles = MagDipoles( varargin )
-            % TO DO: make a better constructor.           
-            if nargin == 1 && ischar( varargin{1} ) && strcmp( varargin{1}, 'demo' )
-                % Here, the user wants a demo.
-                newDipoles.q = [ 3 4 0 ]';
-                newDipoles.m = [ 1 0 0 ]';
-            elseif nargin == 2 || nargin == 3
+            args = BaseTools.argarray2struct( varargin );
+            N = length(args.posArgs);
+            if N==2 || N==3
                 % Here, we have the q and m arrays specified directly.
-                newDipoles.q = varargin{1};
-                newDipoles.m = varargin{2};
+                newDipoles.q = args.posArgs{1};
+                newDipoles.m = args.posArgs{2};
                 if nargin == 3
-                    newDipoles.dV = varargin{3};
+                    newDipoles.dV = args.posArgs{3};
                 else
                     newDipoles.dV = 1;
                 end
-            elseif nargin == 4 || nargin == 5
+            elseif N==4 || N==5
                 % Here, the user is supplying the dimensions of a box,
                 % which we will fill with dipoles at the specified
                 % resolution and with the specified equivalent total
                 % magnetic moment (specified as a 3x1 vector, m).
-                xvals = varargin{1};
-                yvals = varargin{2};
-                zvals = varargin{3};
-                m = varargin{4};
+                xvals = args.posArgs{1};
+                yvals = args.posArgs{2};
+                zvals = args.posArgs{3};
+                m = args.posArgs{4};
                 [ qx, qy, qz ] = meshgrid( xvals, yvals, zvals );
                 N = numel(qx);
                 newDipoles.q = [ qx(:)'; qy(:)'; qz(:)' ];
                 newDipoles.m = repmat( m/N, 1, N );
                 if nargin == 5
-                    newDipoles.dV = varargin{5};
+                    newDipoles.dV = args.posArgs{5};
                 else
                     newDipoles.dV = 1;
                 end
@@ -254,13 +251,13 @@ classdef MagDipoles < MagSource
                     % Define grid.
                     xv = linspace( 1, 3, 5 );
                     yv = linspace( 2, 5, 4 );
-                    zv = linspace( 1, 1.5, 3 );
+                    zv = linspace( -1, -1.5, 3 );
                     myDipoles = MagDipoles( xv, yv, zv, [ 3 .1 -1 ]' );
                     myDipoles.drawDipoles;
                     b = 12;
 
                     % Define a plane for evaluation and show Q field on that plane.
-                    survey_plane = SurveyField( linspace(-b,b), linspace(-b,b), -1 );
+                    survey_plane = SurveyField( linspace(-b,b), linspace(-b,b), 0 );
                     BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', survey_plane ), 3, 3 );
                     BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', survey_plane ), 1, 3 );
                     
@@ -270,10 +267,6 @@ classdef MagDipoles < MagSource
                     BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', survey_volume ), 3, 3 );
                     BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', survey_volume ), 1, 3 );
                     
-                    % % Show field contours.
-                    % BaseTools.tileFigures( myDipoles.showQfieldContours( 'all', [] ), 3, 3 );
-                    % BaseTools.tileFigures( myDipoles.showBfieldContours( 'xyz', [] ), 1, 3 );
-
                 case 'timing'
 
                     % We will build grids of dipoles and see how long it
@@ -320,7 +313,8 @@ classdef MagDipoles < MagSource
                     imagesc( Np, Nq, t );
                     xlabel( 'Np' );
                     ylabel( 'Nq' );
-                    colorbar;
+                    cbar = colorbar;
+                    cbar.Label.String = 'Total time (s)';
 
                     % Now normalize by Nevals.
                     tau = t./Nevals;
@@ -328,7 +322,8 @@ classdef MagDipoles < MagSource
                     imagesc( Np, Nq, tau );
                     xlabel( 'Np' );
                     ylabel( 'Nq' );
-                    colorbar;
+                    cbar = colorbar;
+                    cbar.Label.String = 'Mean time per evaluation (s)';
                     tau_mean = mean( tau(:) );
 
                     % Show tau vs Nevals.
