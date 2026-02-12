@@ -184,7 +184,7 @@ if args.show_M
     if ~isempty( args.M_length )
         lenM = lenM/args.M_length;
     end
-    M_tail_head = [ thisMagBox.cenA thisMagBox.cenA+thisMagBox.MA/lenM ];
+    M_tail_head = [ thisMagBox.cenA thisMagBox.cenA+thisMagBox.M/lenM ];
     BaseTools.drawArrow( ah, M_tail_head(1,:), M_tail_head(2,:), M_tail_head(3,:), 'Color', M_clr, 'LineWidth', 2.0, optargs{:} );
 end
 
