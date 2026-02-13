@@ -75,7 +75,7 @@ end
 % Things get weird if you're too close to the dipoles, so we need to NaN
 % out a small volume around each dipole. By default, we'll define the
 % exclusion zone with some radius qtol, which is proportional to dV.
-d = pdist2( p', theseDipoles.q' ); % returns Np × Nq matrix of distances
+d = compute_distance_matrix( p, theseDipoles.q ); % returns Np × Nq matrix of distances
 tooclose = any( d < args.qtol, 2 ); % logical index (true if too close to dipoles)
 Q(:,:,tooclose) = NaN;
 
@@ -109,4 +109,20 @@ Qij = permute( Qij, [ 3 4 2 1 ] );
 
 
 
+function d = compute_distance_matrix( p, q )
+
+% Compute the Np x Nq distance matrix repesenting all the distances between
+% each evaluation point (p) and each dipole (q).
+[ prows, ~ ] = size(p);
+if prows ~= 3
+    error( 'Input q must be a 3xNp array' );
+end
+[ qrows, ~ ] = size(q);
+if qrows ~= 3
+    error( 'Input q must be a 3xNq array' );
+end
+dx = q(1,:) - p(1,:)';
+dy = q(2,:) - p(2,:)';
+dz = q(3,:) - p(3,:)';
+d = sqrt(dx.^2 + dy.^2 + dz.^2);
 
