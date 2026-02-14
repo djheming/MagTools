@@ -48,17 +48,17 @@ myBox = MagBox( [ 1.5 3.5 ], [ 0.5 1.5 ], [ 0.3 1.3 ], [ 1 0 0 ]' );
 p = [ 2.45 -1 0.9 ]';
 
 % Show the box in 3D, illustrating the evaluation point.
-ah = myBox.drawBox( 'p', p, 'axes', true, 'vertices', true, 'show_M', false, 'show_p_vector', true, 'label_p', true, 'verts_from_origin', { '122', '211' }, 'view', [ 39 47 ] );
+ah = myBox.drawBox( 'p', p, 'axes', true, 'axislabels', 'ijk', 'vertices', true, 'show_M', false, 'show_p_vector', true, 'label_p', true, 'verts_from_origin', { '122', '211' }, 'view', [ 39 47 ] );
 fh = ah.Parent;
 
 % Save orthographic and oblique views.
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
     view( ah, [ 0 90 ] ); % xy
-    exportgraphics( fh, [ figs_folder '/3D_box_geometry_xy.png' ], 'ContentType', 'image', 'Resolution', 600 );
+    exportgraphics( fh, [ figs_folder '/Figure1_3D_box_geometry_xy.png' ], 'ContentType', 'image', 'Resolution', 600 );
     view( ah, [ 0 0 ] ); % xz
-    exportgraphics( fh, [ figs_folder '/3D_box_geometry_xz.png' ], 'ContentType', 'image', 'Resolution', 600 );
+    exportgraphics( fh, [ figs_folder '/Figure1_3D_box_geometry_xz.png' ], 'ContentType', 'image', 'Resolution', 600 );
     view( ah, [ 90 0 ] ); % yz
-    exportgraphics( fh, [ figs_folder '/3D_box_geometry_yz.png' ], 'ContentType', 'image', 'Resolution', 600 );
+    exportgraphics( fh, [ figs_folder '/Figure1_3D_box_geometry_yz.png' ], 'ContentType', 'image', 'Resolution', 600 );
     view( ah, [ 39 47 ] );
     exportgraphics( fh, [ figs_folder '/Figure1_3D_box_geometry_oblique.png' ], 'ContentType', 'image', 'Resolution', 600 );
 end
@@ -213,10 +213,10 @@ end
 
 fh = MagBox.unit_test('Blakely_Figs_4_9_4_10');
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
-    exportgraphics( fh{1}, [ figs_folder '/FigureA1_Blakely_prism_Fig4-9.png' ] );
-    exportgraphics( fh{2}, [ figs_folder '/FigureA2_Blakely_prism_Fig4-10.png' ] );
-    exportgraphics( fh{3}, [ figs_folder '/FigureA3_Blakely_3D_vert.png' ] );
-    exportgraphics( fh{4}, [ figs_folder '/FigureA3_Blakely_3D_horiz.png' ] );
+    exportgraphics( fh{1}, [ figs_folder '/FigureB1_Blakely_prism_Fig4-9.png' ] );
+    exportgraphics( fh{2}, [ figs_folder '/FigureB2_Blakely_prism_Fig4-10.png' ] );
+    exportgraphics( fh{3}, [ figs_folder '/FigureB3_Blakely_3D_vert.png' ] );
+    exportgraphics( fh{4}, [ figs_folder '/FigureB3_Blakely_3D_horiz.png' ] );
 end
 
 
@@ -229,7 +229,7 @@ myBox = MagBox( [ -w/2 w/2 ], [ -L/2 L/2 ], [ -w/2 w/2 ], [ 1 -.2 -.5 ]' );
 survey_volume = SurveyField( linspace(-L,L), linspace(-L,L), linspace(-L,L) );
 fh = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ -30 30 ], 'title', true ) );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
-    exportgraphics( fh, [ figs_folder '/FigureA4_3DB_long_wire.png' ] );
+    exportgraphics( fh, [ figs_folder '/FigureB4_3DB_long_wire.png' ] );
 end
 
 % Show a wide flat plate in 3D.
@@ -239,7 +239,7 @@ myBox = MagBox( [ -w/2 w/2 ], [ -w/2 w/2 ], [ -t/2 t/2 ], [ 1 -.2 -.5 ]' );
 survey_volume = SurveyField( linspace(-w,w), linspace(-w,w), linspace(-w,w) );
 fh = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'view', [ -30 30 ], 'title', true ) );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
-    exportgraphics( fh, [ figs_folder '/FigureA5_3DB_wide_plate.png' ] );
+    exportgraphics( fh, [ figs_folder '/FigureB5_3DB_wide_plate.png' ] );
 end
 
 
@@ -249,14 +249,14 @@ end
 fh = MagEnsemble.unit_test('Bongiolo7');
 text( fh{1}.CurrentAxes, 0.03, 0.97, '(a)', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
-    exportgraphics( fh{1}, [ figs_folder '/FigureA6a_Bongiolo_Fig7.png' ] );
+    exportgraphics( fh{1}, [ figs_folder '/FigureB6a_Bongiolo_Fig7.png' ] );
 end
 
 % Show another example with a prism in a 3D rotation.
 fh = MagEnsemble.unit_test('mixed_orientation');
 text( 0.03, 0.97, '(b)', 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
-    exportgraphics( fh, [ figs_folder '/FigureA6b_two_prisms_mixed_orientation.png' ] );
+    exportgraphics( fh, [ figs_folder '/FigureB6b_two_prisms_mixed_orientation.png' ] );
 end
 
 
