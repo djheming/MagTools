@@ -41,7 +41,10 @@ classdef MagSource < matlab.mixin.Heterogeneous
 
         % Setter methods.
         function thisSource = set.Bref( thisSource, newBref )
-            thisSource.Bref = newBref;
+            if numel(newBref)~=3
+                error( 'Input Bref must be a 3x1 vector.' );
+            end
+            thisSource.Bref = reshape( newBref, [3 1] );
             % If the user changes the ambient field for an ensemble, this
             % needs to be propagated down to the individual members of that
             % group in case any of them have induced magnetization.
