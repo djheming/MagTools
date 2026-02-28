@@ -141,6 +141,10 @@ classdef MagBox < MagSource
                 end
                 % We can set the magnetization now that we know the
                 % coordinate frame the user intended.
+                if numel(input_M)~=3
+                    error( 'Input M must be a 3x1 vector.' );
+                end
+                input_M = reshape( input_M, [3 1] );
                 if strcmp(args.Mframe,'A')
                     newMagBox.Mr = input_M;
                 elseif strcmp(args.Mframe,'S')
@@ -165,7 +169,10 @@ classdef MagBox < MagSource
         % Allow the user to set M directly.
         function thisMagBox = set.M( thisMagBox, new_M )
             % The input magnetization MUST be in the "analysis" coordinate frame.
-            thisMagBox.Mr = new_M;
+            if numel(new_M)~=3
+                error( 'Input M must be a 3x1 vector.' );
+            end
+            thisMagBox.Mr = reshape( new_M, [3 1] );
             thisMagBox.chi = 0; % This will make Mi = 0.
         end
 
@@ -736,6 +743,22 @@ classdef MagBox < MagSource
                     BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
                     myBox = MagBox( [ -Inf 100 ], [ -Inf 200 ], [ 2 5 ], M );
                     BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
+
+                case 'approaching2D'
+
+                    L = 5;
+                    xv = linspace(-10,10,1001);
+                    figure; hold on;
+                    for h = [ .000001 .001 .01 .1 1 2 3 5 7 10 ]
+                        survey = SurveyField( xv, 0, h );
+                        myBox = MagBox( [ -L L ], [ -2 2 ], [ -.001 0 ], [ -1 0 0 ]' );
+                        B = myBox.computeBfield(survey.p);
+                        maxBx = max(abs(B(1,:)));
+                        plot( xv, B(1,:)/maxBx, 'LineWidth', 2.0 );
+                        censurvey = SurveyField( 0, 0, h );
+                        Bcen = myBox.computeBfield(censurvey.p);
+                    end
+                    
 
                 case 'staticQ'
 
