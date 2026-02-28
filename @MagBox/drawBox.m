@@ -83,91 +83,43 @@ if args.axes
 
 end
 
-% If the source is infinite in one of its directions, we'll artificially
-% flatten it first.
-if any(isinf(abs(thisMagBox.vx)))
-    tmprng.x = 0;
+% Draw finite faces and edges. If the prism has any semi-infinite or infinite
+% dimensions, we can draw part of the corresponding faces and edges, but
+% we'll use a different shading and line style to highlight the fact that
+% something is different about these faces/edges. In that case, we'll make
+% the artificially truncated length some large factor greater than the
+% largest finite dimension.
+if any(thisMagBox.finitedims)
+    args.fakeinf = max(thisMagBox.w(thisMagBox.finitedims)) * 1e6;
 else
-    tmprng.x = thisMagBox.vx;
-end
-if any(isinf(abs(thisMagBox.vy)))
-    tmprng.y = 0;
-else
-    tmprng.y = thisMagBox.vy;
-end
-if any(isinf(abs(thisMagBox.vz)))
-    tmprng.z = 0;
-else
-    tmprng.z = thisMagBox.vz;
+    args.fakeinf = 1e6;
 end
 
-% If the source is finite in volume, it's easy enough to draw its faces.
-% But don't forget to transform from the prism coordinates to the analysis
-% coordinate system.
-if sum(thisMagBox.finitedims)==3
-
-    % X-faces. 
-    for j = 1 : 2
+% X-faces.
+for j = 1 : 2
+    if ~isinf(thisMagBox.vx(j))
         [ Xs, Ys, Zs ] = meshgrid( thisMagBox.vx(j), thisMagBox.vy, thisMagBox.vz );
-        [ X, Y, Z ] = transform_coordinates( thisMagBox, Xs, Ys, Zs );
-        sh = surf( ah, squeeze(X), squeeze(Y), squeeze(Z) );
-        sh.EdgeColor = args.box_clr;
-        sh.LineWidth = 1.0;
-        if args.faces
-            sh.FaceColor = args.box_clr;
-        else
-            sh.FaceColor = 'none';
-        end
-        sh.FaceAlpha = 0.3;
+        drawFace( ah, thisMagBox, args, Xs, Ys, Zs );
     end
-
-    % Y-faces.
-    for j = 1 : 2
-        [ Xs, Ys, Zs ] = meshgrid( thisMagBox.vx, thisMagBox.vy(j), thisMagBox.vz );
-        [ X, Y, Z ] = transform_coordinates( thisMagBox, Xs, Ys, Zs );
-        sh = surf( ah, squeeze(X), squeeze(Y), squeeze(Z) );
-        sh.EdgeColor = args.box_clr;
-        sh.LineWidth = 1.0;
-        if args.faces
-            sh.FaceColor = args.box_clr;
-        else
-            sh.FaceColor = 'none';
-        end
-        sh.FaceAlpha = 0.3;
-    end
-
-    % Z-faces.
-    for j = 1 : 2
-        [ Xs, Ys, Zs ] = meshgrid( thisMagBox.vx, thisMagBox.vy, thisMagBox.vz(j) );
-        [ X, Y, Z ] = transform_coordinates( thisMagBox, Xs, Ys, Zs );
-        sh = surf( ah, squeeze(X), squeeze(Y), squeeze(Z) );
-        sh.EdgeColor = args.box_clr;
-        sh.LineWidth = 1.0;
-        if args.faces
-            sh.FaceColor = args.box_clr;
-        else
-            sh.FaceColor = 'none';
-        end
-        sh.FaceAlpha = 0.3;
-    end
-
-elseif sum(thisMagBox.finitedims)==2
-
-    % If the sources is infinitely long in one dimension, we will not be able
-    % to draw its six faces in the usual way so we'll need to truncate.
-    [ Xs, Ys, Zs ] = meshgrid( tmprng.x, tmprng.y, tmprng.z );
-    [ X, Y, Z ] = transform_coordinates( thisMagBox, Xs, Ys, Zs );
-    sh = surf( ah, squeeze(X), squeeze(Y), squeeze(Z) );
-    sh.EdgeColor = args.box_clr;
-    sh.LineWidth = 1.0;
-    if args.faces
-        sh.FaceColor = args.box_clr;
-    else
-        sh.FaceColor = 'none';
-    end
-    sh.FaceAlpha = 0.3;
-
 end
+
+% Y-faces.
+for j = 1 : 2
+    if ~isinf(thisMagBox.vy(j))
+        [ Xs, Ys, Zs ] = meshgrid( thisMagBox.vx, thisMagBox.vy(j), thisMagBox.vz );
+        drawFace( ah, thisMagBox, args, Xs, Ys, Zs );
+    end
+end
+
+% Z-faces.
+for j = 1 : 2
+    if ~isinf(thisMagBox.vz(j))
+        [ Xs, Ys, Zs ] = meshgrid( thisMagBox.vx, thisMagBox.vy, thisMagBox.vz(j) );
+        drawFace( ah, thisMagBox, args, Xs, Ys, Zs );
+    end
+end
+
+% Reimpose axis limits (very large prisms may have zoomed us way out).
 if exist( 'axlims', 'var' ) && ~isempty( axlims )
     axis( ah, axlims );
 end
@@ -369,7 +321,57 @@ end
 
 
 
+function drawFace( ah, thisMagBox, args, Xs, Ys, Zs )
+
+% Draw a single face of the prism. The input arrays should have size 2x2x1
+% or 2x1x2 or 1x2x2, specifying the four corners of the face.
+if numel(Xs)~=4 || numel(Ys)~=4 || numel(Zs)~=4
+    error( 'We need exactly four corners to define a prism face' );
+end
+
+% Identify any infinities and replace them with some finite stand-in value.
+infXs = isinf(Xs);
+if any(infXs(:))
+    Xs(infXs) = sign(Xs(infXs))*args.fakeinf;
+end
+infYs = isinf(Ys);
+if any(infYs(:))
+    Ys(infYs) = sign(Ys(infYs))*args.fakeinf;
+end
+infZs = isinf(Zs);
+if any(infZs(:))
+    Zs(infZs) = sign(Zs(infZs))*args.fakeinf;
+end
+
+% Transform into the analysis coordinate system.
+[ X, Y, Z ] = transform_coordinates( thisMagBox, Xs, Ys, Zs );
+
+% Draw face in this coordinate system.
+sh = surf( ah, squeeze(X), squeeze(Y), squeeze(Z) );
+sh.EdgeColor = args.box_clr;
+sh.LineWidth = 1.0;
+if args.faces
+    sh.FaceColor = args.box_clr;
+else
+    sh.FaceColor = 'none';
+end
+sh.FaceAlpha = 0.3;
+
+% If the face was meant to be infinite, make the edge line style distinct
+% and make the face a bit paler.
+if any( [ infXs(:); infYs(:); infZs(:) ] )
+    sh.LineStyle = '-.';
+    sh.FaceAlpha = 0.2;
+end
+
+
+
+
+
 function [ Xa, Ya, Za ] = transform_coordinates( thisMagBox, Xs, Ys, Zs )
+
+% Assume the input coordinates are expressed in the source frame and then
+% transform them into the analysis frame.
 
 dimsizes = size(Xs);
 pS = [ Xs(:)'; Ys(:)'; Zs(:)' ];
