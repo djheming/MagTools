@@ -271,24 +271,27 @@ classdef MagBox < MagSource
                 ];
         end
         function x0 = get.x0( thisMagBox )
-            if isinf(thisMagBox.wx)
-                x0 = 0;
+            finvx = ~isinf(thisMagBox.vx);
+            if any(finvx)
+                x0 = mean(thisMagBox.vx(finvx));
             else
-                x0 = ( thisMagBox.vx(1)+thisMagBox.vx(2) )/2;
+                x0 = 0;
             end
         end
         function y0 = get.y0( thisMagBox )
-            if isinf(thisMagBox.wy)
-                y0 = 0;
+            finvy = ~isinf(thisMagBox.vy);
+            if any(finvy)
+                y0 = mean(thisMagBox.vy(finvy));
             else
-                y0 = ( thisMagBox.vy(1)+thisMagBox.vy(2) )/2;
+                y0 = 0;
             end
         end
         function z0 = get.z0( thisMagBox )
-            if isinf(thisMagBox.wz)
-                z0 = 0;
+            finvz = ~isinf(thisMagBox.vz);
+            if any(finvz)
+                z0 = mean(thisMagBox.vz(finvz));
             else
-                z0 = ( thisMagBox.vz(1)+thisMagBox.vz(2) )/2;
+                z0 = 0;
             end
         end
         function cenS = get.cenS( thisMagBox )
