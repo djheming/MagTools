@@ -76,7 +76,7 @@ num_points = size(p,2);
 for k = 1 : num_points
     ah = myBox.drawBox( 'p', p(:,k), 'vertices', true, 'show_M', false, 'show_p_vector', true, 'label_p', true, 'shading', true, 'axes', true, 'axislabels', 'ijk', 'rlabels', false, 'alphas_and_fs', true, 'view', [ 20 60 ] );
     fh = ah.Parent;
-    axis( [ 0 4.5 -1 2 -1.5 2 ] );
+    axis( ah, [ -.1 4.5 -1 2 -1.5 2 ] );
     if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
         exportgraphics( fh, [ figs_folder '/Figure6_box_geometry_with_lines_and_angles_' num2str(k) '.png' ], 'Resolution', 600 );
     end
@@ -88,10 +88,7 @@ end
 % and a more general analysis coordinate system (A). 
 
 % Define a prism that is a tad askew.
-roll = 10;
-pitch = -20;
-yaw = 30;
-R_AS = BaseTools.rpy2rot( roll, pitch, yaw );
+R_AS = BaseTools.rpy2rot( 10, -20, 30 ); % Roll, pitch, yaw angles in degrees.
 v_AS = [ 2 -.5 0 ]';
 M = [ 0 1 0 ]'; % This is in the source coordinate frame.
 myBox = MagBox( [ 0 2 ], [ 0 1 ], [ 0 0.6 ], M, v_AS, R_AS, Mframe='S' );
@@ -124,7 +121,7 @@ N = size(p,2);
 
 % Show the box in 2D, illustrating the evaluation point.
 for k = 1 : N
-    ah = myBox.drawBox( 'p', p(:,k), 'axislabels', 'ijk', 'show_M', false, 'label_p', true, 'vertices', true, 'alphas_and_fs', true, 'zerocrossings', true, 'view', [ 0 90 ] );
+    ah = myBox.drawBox( 'p', p(:,k), 'axislabels', 'ijk', 'show_M', false, 'label_p', true, 'vertices', true, 'alphas_and_fs', true, 'zerocrossings', true, 'flatten_inf', true, 'view', [ 0 90 ] );
     if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
         exportgraphics( ancestor(ah,'figure'), sprintf('%s/Figure3_2D_box_geometry_p(%s,%s).png', figs_folder, num2str(p(1,k)), num2str(p(2,k)) ), 'Resolution', 600 );
     end
@@ -142,7 +139,7 @@ myBox = MagBox( [ -3 3 ], [ -1 1 ], [ -Inf Inf ], [ 3 1 0 ]' );
 fine_2D_survey = SurveyField( linspace(-12,12), linspace(-12,12), 0 );
 
 % Show Q field.
-fh = BaseTools.tileFigures( myBox.showQfieldContours( { 'xx', 'xy'; 'yx' 'yy' }, fine_2D_survey, 'title', true ) );
+fh = BaseTools.tileFigures( myBox.showQfieldContours( { 'xx', 'xy'; 'yx' 'yy' }, fine_2D_survey, 'title', true, 'flatten_inf', true ) );
 fh.Position(4) = 920;
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
     exportgraphics( fh, [ figs_folder '/Figure4_2D_Q.png' ], 'ContentType', 'image', 'Resolution', 600 );
@@ -155,7 +152,7 @@ scale_factor = 4e6;
 
 % Show B field vectors over a regular grid, then overlay colored
 % vectors where there are Qii zero crossings.
-ah = myBox.drawBox( 'show_M', true, 'M_length', 3, 'view', [ 0 90 ] );
+ah = myBox.drawBox( 'show_M', true, 'M_length', 3, 'flatten_inf', true, 'view', [ 0 90 ] );
 coarse_2D_survey = SurveyField( -10:10, -10:10, 0 );
 myBox.showBfieldVectors( ah, coarse_2D_survey, 'clr', [ .8 .8 .8 ], 'scale_factor', scale_factor );
 Qii_zc_survey = SurveyField( myBox.computeQiiZeros( -10:10 ) );
@@ -166,7 +163,7 @@ fha = gcf;
 
 % Show B field vectors over a regular grid, then overlay colored
 % vectors where there are Qij zero crossings (two different kinds).
-ah = myBox.drawBox( 'show_M', true, 'M_length', 3, 'view', [ 0 90 ] );
+ah = myBox.drawBox( 'show_M', true, 'M_length', 3, 'flatten_inf', true, 'view', [ 0 90 ] );
 coarse_2D_survey = SurveyField( -10:10, -10:10, 0 );
 myBox.showBfieldVectors( ah, coarse_2D_survey, 'clr', [ .8 .8 .8 ], 'scale_factor', scale_factor );
 Qij_zc_survey_x = SurveyField( -10:10, 0, 0 );
