@@ -160,7 +160,7 @@ elseif sum(survey.nonsingdims)==1
     def_view = [ 0 90 ];
     
 else
-    error( 'Unexpected number of singleton dimensions.' );
+    error( 'Unexpected number of singleton dimensions (%d).', sum(survey.singdims) );
 end
 
 % Adjust perspective, if necessary.
