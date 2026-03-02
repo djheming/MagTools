@@ -87,7 +87,6 @@ elseif sum(survey.nonsingdims)==2
     % overlay mode, so we'll need to clear the axes.
     % TO DO: add the option to make this a true 2D plane filled with
     % imagesc rather than drawn using surfaces. 
-    cla( ah );
     grid( ah, 'on' );
     hold( ah, 'on' );
     axis( ah, 'equal' );
@@ -103,7 +102,7 @@ elseif sum(survey.nonsingdims)==2
     sqV = squeeze(V);
 
     % Show colored surface.
-    surface( sqX, sqY, sqZ, 'CData', sqV, 'FaceColor', 'texturemap', 'EdgeColor', 'none', 'FaceAlpha', 'texturemap', 'AlphaData', args.plane_shading_alpha, 'AlphaDataMapping', 'none', 'FaceLighting', 'none', 'EdgeLighting', 'none', 'AmbientStrength', 1 );
+    surface( ah, sqX, sqY, sqZ, 'CData', sqV, 'FaceColor', 'texturemap', 'EdgeColor', 'none', 'FaceAlpha', 'texturemap', 'AlphaData', args.plane_shading_alpha, 'AlphaDataMapping', 'none', 'FaceLighting', 'none', 'EdgeLighting', 'none', 'AmbientStrength', 1 );
     colormap( ah, MagSource.magcolors );
     axis( ah, 'tight' );
 
@@ -120,9 +119,6 @@ elseif sum(survey.nonsingdims)==2
         cbar = colorbar(ah);
         if isfield( args, 'cbar_label' )
             cbar.Label.String = args.cbar_label;
-            % cbar.Label.Position = [ 0 1.1*max(ctrvals) 0 ];
-            % cbar.Label.Rotation = 0;
-            % cbar.Label.HorizontalAlignment = 'left';
         end
     end
 
@@ -132,7 +128,7 @@ elseif sum(survey.nonsingdims)==2
     % three coordinate axes.
     if length(ctrvals)>1
         clim( ah, [ min(ctrvals) max(ctrvals) ] );
-        plot_2D_contours_on_3D_plane( survey, V, ctrvals );
+        plot_2D_contours_on_3D_plane( ah, survey, V, ctrvals );
     else
         clim( ah, [ -1 1 ] );
     end
@@ -199,7 +195,7 @@ lighting( ah, 'gouraud' );
 
 
 
-function plot_2D_contours_on_3D_plane( survey, V, ctrvals )
+function plot_2D_contours_on_3D_plane( ah, survey, V, ctrvals )
 
 % What is the orientation of our plane?
 axislbls = {
@@ -226,6 +222,7 @@ switch axislbls{survey.singdims}
 end
 
 % Make a contour matrix and extract the data.
+axes(ah);
 Cmat = contourc( cX, cY, cV, ctrvals );
 ctrs = BaseTools.parseContourMatrix( Cmat );
 
@@ -233,15 +230,15 @@ ctrs = BaseTools.parseContourMatrix( Cmat );
 switch axislbls{survey.singdims}
     case 'x'
         for k = 1 : length(ctrs)
-            plot3( X0*ones(size(ctrs(k).x)), ctrs(k).x, ctrs(k).y, 'k' );
+            plot3( ah, X0*ones(size(ctrs(k).x)), ctrs(k).x, ctrs(k).y, 'k' );
         end
     case 'y'
         for k = 1 : length(ctrs)
-            plot3( ctrs(k).x, Y0*ones(size(ctrs(k).x)), ctrs(k).y, 'k' );
+            plot3( ah, ctrs(k).x, Y0*ones(size(ctrs(k).x)), ctrs(k).y, 'k' );
         end
     case 'z'
         for k = 1 : length(ctrs)
-            plot3( ctrs(k).x, ctrs(k).y, Z0*ones(size(ctrs(k).x)), 'k' );
+            plot3( ah, ctrs(k).x, ctrs(k).y, Z0*ones(size(ctrs(k).x)), 'k' );
         end
 end
 
