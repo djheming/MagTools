@@ -91,7 +91,7 @@ if sum(survey.nonsingdims) > 1
 
         % Show the source body or bodies as well.
         if sum(survey.nonsingdims) > 1 && args.show_source
-            thisSource.drawSource( ah, 'show_M', false );
+            thisSource.drawSource( ah, 'show_M', false, optargs{:} );
             % If the source extends beyond the survey domain, it will have
             % expanded the figure. We'll need to scale back to the survey
             % domain.
