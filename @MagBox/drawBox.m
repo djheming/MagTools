@@ -17,7 +17,7 @@ function ah = drawBox( thisMagBox, varargin )
 
 
 % Read input arguments.
-def_args = { 'overlay', true, 'axislabels', 'xyz', 'box_clr', [ .4 .4 .4 ], 'axes', false, 'label_origin', false, 'show_p_vector', false, 'label_p_vector', false, 'label_p', false, 'faces', true, 'vertices', false, 'verts_from_origin', [], 'rlabels', true, 'show_M', true, 'M_length', [] };
+def_args = { 'overlay', true, 'axislabels', 'xyz', 'box_clr', [ .4 .4 .4 ], 'axes', false, 'label_origin', false, 'show_p_vector', false, 'label_p_vector', false, 'label_p', false, 'faces', true, 'vertices', false, 'verts_from_origin', [], 'rlabels', true, 'show_M', true, 'M_length', [], 'flatten_inf', false };
 [ args, optargs ] = BaseTools.argarray2struct( varargin, def_args );
 
 % Check leading positional arguments for an axis handle.
@@ -117,6 +117,15 @@ for j = 1 : 2
         [ Xs, Ys, Zs ] = meshgrid( thisMagBox.vx, thisMagBox.vy, thisMagBox.vz(j) );
         drawFace( ah, thisMagBox, args, Xs, Ys, Zs );
     end
+end
+
+% If the prism is infinite in one direction and if the user has requested a
+% flattening along that dimension, we can still draw the prism's cross-section.
+if args.flatten_inf
+    v = [ thisMagBox.vx; thisMagBox.vy; thisMagBox.vz ];
+    v(isinf(v)) = 0;
+    [ Xs, Ys, Zs ] = meshgrid( unique(v(1,:)), unique(v(2,:)), unique(v(3,:)) );
+    drawFace( ah, thisMagBox, args, Xs, Ys, Zs );
 end
 
 % Reimpose axis limits (very large prisms may have zoomed us way out).
