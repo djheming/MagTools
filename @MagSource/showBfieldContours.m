@@ -117,9 +117,9 @@ if sum(survey.nonsingdims) > 1
             if isfield( args, 'overlay_vectors' ) && ~isempty( args.overlay_vectors ) && args.overlay_vectors
                 % First, scale down the grid resolution to something
                 % reasonable.
-                xv = BaseTools.get_round_step_size( survey.xv, 16 );
-                yv = BaseTools.get_round_step_size( survey.yv, 16 );
-                zv = BaseTools.get_round_step_size( survey.zv, 16 );
+                xv = BaseTools.getRoundStepSize( survey.xv, 16 );
+                yv = BaseTools.getRoundStepSize( survey.yv, 16 );
+                zv = BaseTools.getRoundStepSize( survey.zv, 16 );
                 vector_survey = SurveyField( xv, yv, zv );
                 Bv = thisSource.computeBfield(vector_survey.p);
                 MagSource.drawBfieldVectors( ah, vector_survey, Bv, optargs{:} );

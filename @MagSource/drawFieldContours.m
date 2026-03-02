@@ -108,9 +108,9 @@ elseif sum(survey.nonsingdims)==2
 
     % Now we want to overlay contours. But which contour values?
     if isfield( args, 'clim' ) && ~isempty( args.clim )
-        ctrvals = BaseTools.get_round_step_size( args.clim, 30, true );
+        ctrvals = BaseTools.getRoundStepSize( args.clim, 30, true );
     else
-        ctrvals = BaseTools.get_round_step_size( V, 30, true );
+        ctrvals = BaseTools.getRoundStepSize( V, 30, true );
     end
     if args.suppress_2D_zero_contours
         ctrvals = ctrvals(ctrvals~=0);

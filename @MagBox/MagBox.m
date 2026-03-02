@@ -389,7 +389,7 @@ classdef MagBox < MagSource
                 headlength = 1/10;
                 fi = gobjects(size(args.comps));
                 for i = 1 : numel(args.comps)
-                    [ ai, fi(i) ] = BaseTools.verify_axes_handle;
+                    [ ai, fi(i) ] = BaseTools.verifyAxesHandle;
                     BaseTools.drawArrow( ai, M_tail_head(1,:)*(strcmp(args.comps(i),'x')), M_tail_head(2,:)*(strcmp(args.comps(i),'y')), M_tail_head(3,:)*(strcmp(args.comps(i),'z')), 'LineWidth', 2.0, 'Color', args.Color, 'headlength', headlength );
                     BaseTools.drawArrow( ai, M_tail_head(1,:), M_tail_head(2,:), M_tail_head(3,:), 'LineWidth', 2.0, 'Color', args.Color2, 'headlength', headlength, 'view', args.view );
                     if args.addlight
@@ -453,7 +453,7 @@ classdef MagBox < MagSource
                 error( 'Need more than one key frame to make a movie.' );
             end
             num_frames = args.duration * 30;
-            [ frame_inds, key_frame_inds ] = BaseTools.spaced_sequence( num_keys, num_frames );
+            [ frame_inds, key_frame_inds ] = BaseTools.spacedSequence( num_keys, num_frames );
             boxList = MagBox.interpBox( key_frame_inds, keyBoxes, frame_inds );
 
             % Do we need to normalize the magnetic moments?
@@ -485,7 +485,7 @@ classdef MagBox < MagSource
                 comp_fig = BaseTools.tileFigures( myBox.showBfieldContours( 'xyz', survey_volume, 'Q', Q, 'view', [ 25 15 ], 'title', true ), 1, 3 );
                 writeVideo( writerObj, getframe(comp_fig) );
                 close(comp_fig);
-                BaseTools.progress_report(movietimer,t,num_frames);
+                BaseTools.progressReport(movietimer,t,num_frames);
             end
 
             % Save movie file.
@@ -557,7 +557,7 @@ classdef MagBox < MagSource
                 outputBoxList(k).vz = output_boxdims(k,5:6);
             end
             % For the magnetization vector, do spherical vector interpolation.
-            outputM = BaseTools.interp_vectors( x, boxMs', xq );
+            outputM = BaseTools.interpVectors( x, boxMs', xq );
             for k = 1 : num_output_boxes
                 outputBoxList(k).M = outputM(:,k);
             end
