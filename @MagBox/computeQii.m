@@ -75,10 +75,22 @@ for a = [ 1 2 ]
                 thetas(a,b,c,inds1) = s_abc * atan( (rjb(inds1).*rkc(inds1)) ./ (ria(inds1).*Rabc(inds1)) );
             end
 
-            % Case 2: The ia face is infinitely far away.
-            inds2 = ~riaiszero & infia;
-            if any(inds2)
-                thetas(a,b,c,inds2) = 0;
+            % Case 2.1: The ia face is infinitely far away, but at least
+            % one of the other two is finite.
+            inds21 = ~riaiszero & infia & ~(infjb & infkc);
+            if any(inds21)
+                thetas(a,b,c,inds21) = 0;
+            end
+
+            % Case 2.2: All three faces (ia, jb, kc) are infinitely far
+            % away. This is a pathological case where the result depends on
+            % the relative rates at which the terms grow. Since there is no
+            % consistent way to do this while preserving the property that
+            % tr(Q)=0, we must return NaN.
+            inds22 = ~riaiszero & infia & infjb & infkc;
+            if any(inds22)
+                thetas(a,b,c,inds22) = NaN;
+                warning('Qii is undefined in the octant limit');
             end
 
             % Case 3.1: Only the jb face is infinitely far away.
