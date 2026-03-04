@@ -747,22 +747,6 @@ classdef MagBox < MagSource
                     myBox = MagBox( [ -Inf 100 ], [ -Inf 200 ], [ 2 5 ], M );
                     BaseTools.tileFigures( myBox.showQfieldContours('all',wide_survey) );                   
 
-                case 'approaching2D'
-
-                    L = 5;
-                    xv = linspace(-10,10,1001);
-                    figure; hold on;
-                    for h = [ .000001 .001 .01 .1 1 2 3 5 7 10 ]
-                        survey = SurveyField( xv, 0, h );
-                        myBox = MagBox( [ -L L ], [ -2 2 ], [ -.001 0 ], [ -1 0 0 ]' );
-                        B = myBox.computeBfield(survey.p);
-                        maxBx = max(abs(B(1,:)));
-                        plot( xv, B(1,:)/maxBx, 'LineWidth', 2.0 );
-                        censurvey = SurveyField( 0, 0, h );
-                        Bcen = myBox.computeBfield(censurvey.p);
-                    end
-                    
-
                 case 'staticQ'
 
                     % Construct a prism with static dimensions but then
