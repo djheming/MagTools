@@ -76,11 +76,6 @@ if sum(survey.nonsingdims)==3
         ph.FaceAlpha = 0.25;
     end
 
-    % Restrict axis limits to display range.
-    ah.XLim = [ min(survey.xv) max(survey.xv) ];
-    ah.YLim = [ min(survey.yv) max(survey.yv) ];
-    ah.ZLim = [ min(survey.zv) max(survey.zv) ];
-
 elseif sum(survey.nonsingdims)==2
 
     % Here we have a 2D plane. This is not compatible with
@@ -161,6 +156,17 @@ elseif sum(survey.nonsingdims)==1
     
 else
     error( 'Unexpected number of singleton dimensions (%d).', sum(survey.singdims) );
+end
+
+% Restrict axis limits to display range.
+if min(survey.xv) ~= max(survey.xv)
+    ah.XLim = [ min(survey.xv) max(survey.xv) ];
+end
+if min(survey.yv) ~= max(survey.yv)
+    ah.YLim = [ min(survey.yv) max(survey.yv) ];
+end
+if min(survey.zv) ~= max(survey.zv)
+    ah.ZLim = [ min(survey.zv) max(survey.zv) ];
 end
 
 % Adjust perspective, if necessary.
