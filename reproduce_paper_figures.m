@@ -279,9 +279,9 @@ keyBoxes = [
     MagBox( [ -wx/2 wx/2 ], [ -wy/2 wy/2 ], [ -wz/2 wz/2 ], [ 3 0 0 ]' );
     ];
 if exist( 'figs_folder', 'var' ) && ~isempty( figs_folder )
-    keyBoxes.makeBmovie( [ figs_folder '/Video1_3DB_direction_cycle.mp4' ], 'fixed_moment', 500, 'b', 40, 'duration', 4 );
+    keyBoxes.makeBmovie( [ figs_folder '/Video1_3DB_direction_cycle.mp4' ], 'fixed_moment', 500, 'b', 20, 'duration', 4 );
 else
-    keyBoxes.previewBmovie( 'fixed_moment', 500, 'b', 40 );
+    keyBoxes.previewBmovie( 'fixed_moment', 500, 'b', 20 );
 end
 
 
