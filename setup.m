@@ -1,56 +1,204 @@
 function setup()
 
-% Set workspace to include any necessary dependencies.
+    % Hemingway Lab Universal Smart Setup.
+    % Bootstraps the environment via recursive dependency discovery.
 
-% Get the root of this MagTools installation.
-magToolsPath = fileparts(mfilename('fullpath'));
-
-% Add MagTools (and any internal /libs) to the path.
-add_path_no_git(magToolsPath);
-
-% Check if the dependency (BaseTools) is satisfied.
-if exist('BaseTools', 'class')
-    fprintf('MagTools and BaseTools are ready.\n');
-else
-    % Here, we haven't found BaseTools yet, but we can go look for it in a
-    % sibling folder.
-    parentDir = fileparts(magToolsPath);
-    siblingBaseTools = fullfile(parentDir, 'BaseTools');
-    if exist(siblingBaseTools, 'dir')
-        add_path_no_git(siblingBaseTools);
+    % Start clearn.
+    restoredefaultpath;
+    
+    % Take note of our starting point.
+    root = fileparts(mfilename('fullpath'));
+    
+    % 1. Add this project's root to the path immediately
+    addPathClean(root);
+    
+    % 2. Recursively discover and add dependencies
+    fprintf('Starting recursive setup for: %s\n', root);
+    [allLibPaths, foundNames, foundStrategies] = collectDependencies(root, {}, {}, {});
+    
+    for i = 1:numel(allLibPaths)
+        addPathClean(allLibPaths{i});
+        fprintf('  [Linked] %-15s [via %s]\n', foundNames{i}, foundStrategies{i});
     end
-    if exist('BaseTools', 'class')
-        fprintf('MagTools ready. BaseTools found in sibling folder.\n');
+    
+    if numel(allLibPaths) > 0
+        fprintf('Setup complete. %d libraries linked.\n', numel(allLibPaths));
     else
-        warning('BaseTools NOT FOUND.');
-        fprintf('MagTools requires BaseTools to function.\n');
+        fprintf('Setup complete. No external dependencies found.\n');
+    end
+
+end
+
+%% INTERNAL HELPER FUNCTIONS (Self-Contained)
+
+function [paths, names, strategies] = collectDependencies(currentFolder, paths, names, strategies)
+
+    % Recursive crawler that handles Sibling, Libs, and Custom paths
+    manifest = fullfile(currentFolder, 'dependencies.m');
+    if ~exist(manifest, 'file')
+        return; 
+    end
+    
+    % Get dependencies from the manifest
+    currDir = pwd;
+    cleanup = onCleanup(@() cd(currDir));
+    cd(currentFolder);
+    deps = dependencies();
+    clear cleanup; % Trigger cd back to currDir
+    
+    for i = 1:numel(deps)
+
+        libName = deps{i};
+        if ismember(libName, names)
+            continue;  % Avoid loops
+        end
+        
+        [target, strategy] = findLibrary(currentFolder, libName);
+        
+        if ~isempty(target) && isfolder(target)
+            paths{end+1} = target; %#ok<AGROW>
+            names{end+1} = libName; %#ok<AGROW>
+            strategies{end+1} = strategy; %#ok<AGROW>
+            [paths, names, strategies] = collectDependencies(target, paths, names, strategies); % Recurse
+        else
+            warning('Setup:MissingDependency', 'Could not find dependency: %s', libName);
+        end
+
+    end
+
+end
+
+function [target, strategy] = findLibrary(sourceRoot, libName)
+
+    strategy = 'NotFound';
+
+    % Priority 1: Local /libs (Archive/Bundle Mode)
+    path1 = fullfile(sourceRoot, 'libs', libName);
+    % Priority 2: Sibling Directory (Development Mode)
+    path2 = fullfile(fileparts(sourceRoot), libName);
+    % Priority 3 & 4: Check git-ignored local_paths.m
+    [ path3, labRoot ] = checkLocalConfig(libName);
+
+    % Priority 5: Environment Variable (Remote/Batch Mode)
+    envRoot = getenv('HEMINGWAY_LAB_ROOT');    
+
+    % Priority 6: In case one is not specified, we'll define a "standard"
+    % or "best guess" about the location of the lab root. If the user does
+    % not follow this convention, we go to the last resort (Priority 7) of
+    % prompting them to browse.
+    homeDir = char(java.lang.System.getProperty('user.home'));
+    standardRoot = fullfile(homeDir, 'Documents', 'GitHub');
+    pathStandard = fullfile(standardRoot, libName);
+    
+    % Waterfall through the paths in priority order
+    if isfolder(path1)
+        % Priority 1: If there's a /libs folder, that takes priority.
+        target = path1;
+        strategy = 'bundle: /libs';
+    elseif isfolder(path2)
+        % Priority 2: Developers will often be working in a repo folder
+        % that is a sibling of all the other library repos.
+        target = path2;
+        strategy = 'sibling folder';
+    elseif ~isempty(path3) && isfolder(path3)
+        % Priority 3: Neither of the above two situations apply but perhaps
+        % the user has deliberately specified and recorded a preferred path
+        % in the local_paths.m file (this usually comes from having
+        % previously failed all the way down to Priority 7).
+        target = path3;
+        strategy = 'local_paths.m (direct)';
+    elseif ~isempty(labRoot) && isfolder(fullfile(labRoot, libName))
+        % Priority 4: checkLocalConfig returned a valid labRoot folder.
+        target = fullfile(labRoot, libName);
+        strategy = 'local_paths.m (LabRoot)';
+    elseif ~isempty(envRoot) && isfolder(fullfile(envRoot, libName))
+        % Priority 5: checkLocalConfig doesn't know the labRoot but maybe
+        % it has been specified via an environment variable?
+        target = fullfile(envRoot, libName);
+        strategy = 'Env Var (HEMINGWAY_LAB_ROOT)';
+    elseif isfolder(pathStandard)
+        % Priority 6: Best guess of a conventional location.
+        target = pathStandard;
+        strategy = 'Standard Convention (~/Documents/GitHub)';        
+    else
+        % Priority 7: Interactive prompt (last resort).
+        target = promptForPath(libName);
+        if ~isempty(target)
+            strategy = 'user selection';
+        end
     end
 end
 
+function [ p, labRoot ] = checkLocalConfig(libName)
+    p = '';
+    labRoot = '';
+    if exist('local_paths.m', 'file')
+        config = local_paths();
+        if isfield(config, libName)
+            p = config.(libName); 
+        end
+        if isfield(config, 'LabRoot')
+            labRoot = config.LabRoot; 
+        end
+    end
 end
 
+function target = promptForPath(libName)
 
+    target = '';
 
-function add_path_no_git(targetPath)
+    % Check whether in batch mode where the code is being run remotely
+    % without an interactive GUI. 
+    isBatch = batchStartupOptionUsed || ~usejava('desktop');
+    if isBatch
+        error('Setup:MissingDependency', 'Dependency "%s" not found and no UI available for prompting. Check HEMINGWAY_LAB_ROOT.', libName);
+    end
 
-% Get the raw path string
-rawPath = genpath(targetPath);
+    % If we get this far, we have a GUI available to prompt the user.
+    fprintf('  [?] Dependency "%s" not found in siblings or /libs.\n', libName);
+    sel = uigetdir(pwd, sprintf('Select folder for library: %s', libName));
+    
+    if sel ~= 0
+        target = sel;
+        parentDir = fileparts(target);
+        % Ask whether user wants us to remember this parent folder as the
+        % labRoot folder.
+        choice = questdlg(sprintf('Would you like to remember this folder (%s) as the Lab Root?\n', parentDir), 'Set Lab Root', 'Yes', 'No', 'Yes');
+         if strcmp(choice, 'Yes')
+             saveLocalPath('LabRoot', parentDir);
+         else
+             saveLocalPath(libName, target);
+         end
+    end
 
-% Split into individual directory strings
-% MATLAB uses ';' on Windows and ':' on Mac/Linux
-pathList = strsplit(rawPath, pathsep);
-
-% Filter out directories containing '.git' or 'resources' (common in Projects)
-% We use 'filesep' to ensure we only match actual folder names
-isBad = contains(pathList, [filesep '.git']) | ...
-    contains(pathList, [filesep 'resources']) | ...
-    cellfun(@isempty, pathList);
-cleanPathList = pathList(~isBad);
-
-% Join them back and add to path
-if ~isempty(cleanPathList)
-    addpath(strjoin(cleanPathList, pathsep));
 end
 
+function saveLocalPath(libName, targetPath)
+
+    fname = 'local_paths.m';
+    if ~exist(fname, 'file')
+        fid = fopen(fname, 'w');
+        fprintf(fid, 'function p = local_paths()\n\np = struct();\n');
+        fclose(fid);
+    end
+    % Append choice to the file
+    fid = fopen(fname, 'a');
+    fprintf(fid, 'p.%s = ''%s'';\n', libName, targetPath);
+    fclose(fid);
+    fprintf('  [Saved] Path to %s saved in local_paths.m\n', libName);
+
 end
 
+function addPathClean(pathIn)
+
+    % genpath + filtering .git and other hidden metadata
+    p = genpath(pathIn);
+    parts = strsplit(p, pathsep);
+    % Exclude hidden folders like .git, .DS_Store, etc.
+    keep = cellfun(@(x) ~isempty(x) && ~contains(x, [filesep '.']), parts);
+    validParts = parts(keep);
+    if ~isempty(validParts)
+        addpath(strjoin(validParts, pathsep));
+    end
+
+end
