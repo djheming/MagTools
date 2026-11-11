@@ -108,7 +108,7 @@ if sum(survey.nonsingdims) > 1
 
         % Optionally add a title.
         if args.title
-            text( 0, max(survey.Y(:)), max(survey.Z(:)), [ 'Q_{' eltxt(i) eltxt(j) '}' ], 'FontSize', 16 );
+            text( ah, 0, max(survey.Y(:)), max(survey.Z(:)), [ 'Q_{' eltxt(i) eltxt(j) '}' ], 'FontSize', 16 );
         end
 
         % If this is a 2D survey for a prism, there are some optional overlays.
@@ -116,7 +116,7 @@ if sum(survey.nonsingdims) > 1
 
             % Optionally add panel label.
             if isfield( args, 'axlbl' ) && ~isempty( args.axlbl )
-                text( 0.03, 0.97, args.axlbl, 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
+                text( ah, 0.03, 0.97, args.axlbl, 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
             end
 
             % Optionally show zero crossings and peaks.
@@ -164,8 +164,8 @@ elseif sum(survey.nonsingdims) == 1
         legtxt{k} = [ 'Q_{' eltxt(i) eltxt(j) '}' ];
         plot( ah, hvals, squeeze(Q(i,j,:)), 'LineStyle', styls{j}, 'Color', clrs(i,:), 'LineWidth', 2.0 );
     end
-    xlabel( axislbls{survey.nonsingdims} );
-    ylabel( 'B (nT)' );
+    xlabel( ah, axislbls{survey.nonsingdims} );
+    ylabel( ah, 'B (nT)' );
     lh = legend( legtxt );
     lh.AutoUpdate = 'off';
     

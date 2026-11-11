@@ -107,7 +107,7 @@ if sum(survey.nonsingdims) > 1
             else
                 ztxt = max(survey.Z(:));
             end
-            text( 0, ytxt, ztxt, [ 'B_{' component(k) '}' ], 'FontSize', 16 );
+            text( ah, 0, ytxt, ztxt, [ 'B_{' component(k) '}' ], 'FontSize', 16 );
         end
 
         % If this is a 2D survey, there are some optional overlays.
@@ -127,7 +127,7 @@ if sum(survey.nonsingdims) > 1
 
             % Optionally add panel label.
             if isfield( args, 'axlbl' ) && ~isempty( args.axlbl )
-                text( 0.03, 0.97, args.axlbl, 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
+                text( ah, 0.03, 0.97, args.axlbl, 'Units', 'normalized', 'HorizontalAlignment', 'left', 'VerticalAlignment', 'top', 'FontSize', 16 );
             end
 
         end
@@ -156,9 +156,9 @@ elseif sum(survey.nonsingdims) == 1
         legtxt{k} = [ 'B_' component(k) ];
         plot( ah, hvals, squeeze(B(i,:))*1e9, 'Color', clrs(k,:), 'LineWidth', 2.0 );
     end
-    xlabel( axislbls{survey.nonsingdims} );
-    ylabel( 'B (nT)' );
-    lh = legend( legtxt );
+    xlabel( ah, axislbls{survey.nonsingdims} );
+    ylabel( ah, 'B (nT)' );
+    lh = legend( ah, legtxt );
     lh.AutoUpdate = 'off';
 
     % Optionally annotate the 1D transect lines.
